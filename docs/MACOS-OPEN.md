@@ -1,29 +1,31 @@
 # Opening npp-x on macOS
 
 Apple Gatekeeper blocks apps that are **not notarized** with an Apple Developer ID.  
-npp-x’s free CI builds are **ad-hoc signed** (identity `-`) so they run, but macOS still shows:
+npp-x’s free CI builds are **ad-hoc signed** (identity `-`) so they *can* run, but after a browser/GitHub download macOS still shows:
 
 > “Apple could not verify … is free from malware”
 
-That is expected **without** a paid Apple Developer Program certificate + notarization (~$99/year). It is not a virus scan failure inside the app.
+That is **quarantine + missing notarization**, not a virus inside the app. Double-click alone will keep failing until you clear quarantine or use Right-click → Open once.
 
-## Fix (one-time per install)
+## Fix (one-time per install) — do this in order
 
-### Option A — Finder (easiest)
+1. Open the **`.dmg`**, drag **npp-x** into **Applications**.
+2. Download **[Open-npp-x.command](https://github.com/arun-prasad-t/npp-x/releases/latest/download/Open-npp-x.command)** from the same release (or use the copy in the repo `scripts/`).
+3. In Finder: right-click the `.command` → **Open** → **Open** (first time only).
+4. It clears quarantine and launches the app. Later opens: normal double-click on `npp-x.app`.
 
-1. Open **Finder** → drag `npp-x.app` to **Applications** (if you haven’t).
-2. **Right-click** (or Control-click) `npp-x.app` → **Open**.
-3. Click **Open** in the dialog.
-4. Later launches work with a normal double-click.
+### Option A — Finder only (no script)
 
-### Option B — Terminal (clears quarantine)
+1. Drag `npp-x.app` to **Applications**.
+2. **Right-click** (Control-click) `npp-x.app` → **Open** → **Open**.
+3. Later launches work with a normal double-click.
+
+### Option B — Terminal
 
 ```bash
 xattr -cr /Applications/npp-x.app
 open /Applications/npp-x.app
 ```
-
-Or download and double-click [`scripts/macos-open-npp-x.command`](../scripts/macos-open-npp-x.command) after installing the app.
 
 ## Notarized builds (silent open)
 

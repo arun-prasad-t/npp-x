@@ -144,6 +144,10 @@ export const TOP_MENUS: TopMenu[] = [
         ],
       },
       sep(),
+      { kind: "item", id: -1020, label: "Compare Tabs…" },
+      { kind: "item", id: -1021, label: "Compare with Clipboard" },
+      { kind: "item", id: -1022, label: "Exit Diff" },
+      sep(),
       { kind: "item", id: -1001, label: "Theme Store…" },
     ],
   },
@@ -187,6 +191,23 @@ export const TOP_MENUS: TopMenu[] = [
   {
     label: "Tools",
     items: [
+      {
+        kind: "submenu",
+        label: "JSON",
+        items: [
+          { kind: "item", id: -1010, label: "Pretty-print JSON" },
+          { kind: "item", id: -1011, label: "Minify JSON" },
+        ],
+      },
+      {
+        kind: "submenu",
+        label: "XML",
+        items: [
+          { kind: "item", id: -1012, label: "Pretty-print XML" },
+          { kind: "item", id: -1013, label: "Minify XML" },
+        ],
+      },
+      sep(),
       {
         kind: "submenu",
         label: "MD5",
@@ -242,4 +263,11 @@ export const NPPX = {
   THEME_STORE: -1001,
   LANGUAGE_LIST: -1002,
   PLUGIN_STORE: -1003,
+  JSON_PRETTY: -1010,
+  JSON_MINIFY: -1011,
+  XML_PRETTY: -1012,
+  XML_MINIFY: -1013,
+  DIFF_TABS: -1020,
+  DIFF_CLIPBOARD: -1021,
+  DIFF_EXIT: -1022,
 } as const;

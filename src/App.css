@@ -372,6 +372,45 @@ select,
   background: var(--npp-tab-active);
 }
 
+.diff-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.diff-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--npp-chrome-2);
+  border-bottom: 1px solid var(--npp-border);
+}
+
+.diff-toolbar button {
+  appearance: none;
+  border: 1px solid var(--npp-border);
+  background: var(--npp-tab-active);
+  color: inherit;
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  min-height: 32px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.diff-pane > section,
+.diff-pane .monaco-diff-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100% !important;
+}
+
 .editor-pane > section,
 .editor-pane .monaco-editor {
   height: 100% !important;

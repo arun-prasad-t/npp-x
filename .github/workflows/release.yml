@@ -88,21 +88,43 @@ jobs:
           releaseBody: |
             Cross-platform Notepad++-inspired editor (Tauri 2 + React + Monaco).
 
-            ### macOS Gatekeeper
-            Free CI builds are **ad-hoc signed** (not Apple-notarized). If macOS says it cannot verify the app:
+            Built-in: **JSON / XML formatters** (Tools menu) and **Diff** (View → Compare).
 
-            1. **Right-click** `npp-x.app` → **Open** → **Open**, or
-            2. Run: `xattr -cr /Applications/npp-x.app && open /Applications/npp-x.app`
+            ### macOS — read this (Gatekeeper)
+            Builds are **ad-hoc signed** (not Apple-notarized). Double-click after download **will** warn.
 
-            Full guide: [docs/MACOS-OPEN.md](https://github.com/arun-prasad-t/npp-x/blob/main/docs/MACOS-OPEN.md)
+            1. Drag `npp-x.app` from the DMG into **Applications**
+            2. Download **Open-npp-x.command** from this release → right-click → **Open**
+               (or: right-click `npp-x.app` → Open → Open)
+            3. Terminal fallback: `xattr -cr /Applications/npp-x.app && open /Applications/npp-x.app`
+
+            Guide: [docs/MACOS-OPEN.md](https://github.com/arun-prasad-t/npp-x/blob/main/docs/MACOS-OPEN.md)
 
             ### Downloads
-            | Platform | Typical asset |
-            |----------|----------------|
-            | macOS Apple Silicon | `.dmg` / `.app` (`aarch64`) |
-            | macOS Intel | `.dmg` / `.app` (`x64`) |
+            | Platform | Asset |
+            |----------|--------|
+            | macOS Apple Silicon | `npp-x_*_aarch64.dmg` + `Open-npp-x.command` |
+            | macOS Intel | `npp-x_*_x64.dmg` + `Open-npp-x.command` |
             | Windows x64 | `.msi` / `.exe` |
             | Linux x64 | `.AppImage` / `.deb` |
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Upload macOS Gatekeeper opener
+        if: matrix.platform == 'ubuntu-22.04'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            TAG="v$(node -p "require('./package.json').version")"
+          fi
+          cp scripts/macos-open-npp-x.command Open-npp-x.command
+          chmod +x Open-npp-x.command
+          # Release may already exist from tauri-action
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            gh release view "$TAG" >/dev/null 2>&1 && break
+            sleep 15
+          done
+          gh release upload "$TAG" Open-npp-x.command --clobber

@@ -1,4 +1,5 @@
 import type { editor as MonacoEditor } from "monaco-editor";
+import { formatJson, formatXml } from "./formatters";
 import { CMD } from "./npp/shortcuts";
 import { NPPX } from "./npp/menus";
 
@@ -8,6 +9,10 @@ export type DispatchContext = {
   getText: () => string;
   setText: (text: string, dirty?: boolean) => void;
   transformSelectionOrDoc: (fn: (s: string) => string) => void;
+  formatDocument: (kind: "json" | "xml", minify: boolean) => void;
+  openDiffTabs: () => void;
+  openDiffClipboard: () => void;
+  exitDiff: () => void;
   // file ops
   newFile: () => void;
   openFile: () => void;
@@ -398,9 +403,28 @@ export async function dispatchCommand(
     case NPPX.PLUGIN_STORE:
       return ctx.openPluginStore();
 
+    case NPPX.JSON_PRETTY:
+      return ctx.formatDocument("json", false);
+    case NPPX.JSON_MINIFY:
+      return ctx.formatDocument("json", true);
+    case NPPX.XML_PRETTY:
+      return ctx.formatDocument("xml", false);
+    case NPPX.XML_MINIFY:
+      return ctx.formatDocument("xml", true);
+
+    case NPPX.DIFF_TABS:
+      return ctx.openDiffTabs();
+    case NPPX.DIFF_CLIPBOARD:
+      return ctx.openDiffClipboard();
+    case NPPX.DIFF_EXIT:
+      return ctx.exitDiff();
+
     default:
       ctx.notify(`Command ${id} is on the N++ map but not implemented yet`);
   }
 }
+
+// Keep format helpers available for tests / plugins
+export { formatJson, formatXml };
 
 export { digestHex, md5 };
