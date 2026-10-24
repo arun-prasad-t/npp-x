@@ -25,6 +25,16 @@ export function createUntitled(): DocumentTab {
   };
 }
 
+/** Keep “new N” numbering ahead of restored session tabs. */
+export function syncUntitledCounterFromTabs(tabs: DocumentTab[]) {
+  let max = 0;
+  for (const t of tabs) {
+    const m = /^new (\d+)$/i.exec(t.name);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  if (max >= counter) counter = max + 1;
+}
+
 export function createFromFile(
   name: string,
   path: string,

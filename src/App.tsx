@@ -30,6 +30,14 @@ import {
 } from "./lib/themes";
 import { dispatchCommand, digestHex, md5 } from "./lib/commandDispatch";
 import { matchShortcut } from "./lib/npp/shortcuts";
+import {
+  initialTabsFromSession,
+  isRememberSessionEnabled,
+  loadSession,
+  loadSessionSync,
+  saveSession,
+  setRememberSessionEnabled,
+} from "./lib/session";
 import { isTauri, readTextFile, writeTextFile } from "./lib/tauri";
 import "./App.css";
 
@@ -53,10 +61,11 @@ function loadEnabledPlugins(): string[] {
 }
 
 export default function App() {
-  const [tabs, setTabs] = useState<DocumentTab[]>(() => [createUntitled()]);
-  const [activeId, setActiveId] = useState(() => tabs[0].id);
-  const [wordWrap, setWordWrap] = useState(false);
-  const [fontSize, setFontSize] = useState(14);
+  const boot = useMemo(() => initialTabsFromSession(), []);
+  const [tabs, setTabs] = useState<DocumentTab[]>(() => boot.tabs);
+  const [activeId, setActiveId] = useState(() => boot.activeId);
+  const [wordWrap, setWordWrap] = useState(() => boot.wordWrap);
+  const [fontSize, setFontSize] = useState(() => boot.fontSize);
   const [cursor, setCursor] = useState<Cursor>({
     line: 1,
     column: 1,
@@ -100,11 +109,60 @@ export default function App() {
   );
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
+  const sessionTimer = useRef<number | null>(null);
 
   const active = useMemo(
     () => tabs.find((t) => t.id === activeId) ?? tabs[0],
     [tabs, activeId],
   );
+
+  // IndexedDB may hold a larger session if localStorage was over quota last time
+  useEffect(() => {
+    if (loadSessionSync()) return;
+    void loadSession().then((s) => {
+      if (!s?.tabs.length) return;
+      setTabs(s.tabs);
+      setActiveId(
+        s.tabs.some((t) => t.id === s.activeId) ? s.activeId : s.tabs[0].id,
+      );
+      setWordWrap(!!s.wordWrap);
+      setFontSize(s.fontSize || 14);
+    });
+  }, []);
+
+  // Debounced session snapshot (N++ “remember current session”)
+  useEffect(() => {
+    if (sessionTimer.current) window.clearTimeout(sessionTimer.current);
+    sessionTimer.current = window.setTimeout(() => {
+      void saveSession({
+        activeId,
+        tabs,
+        wordWrap,
+        fontSize,
+      });
+    }, 400);
+    return () => {
+      if (sessionTimer.current) window.clearTimeout(sessionTimer.current);
+    };
+  }, [tabs, activeId, wordWrap, fontSize]);
+
+  useEffect(() => {
+    const flush = () => {
+      void saveSession({
+        activeId: activeIdRef.current,
+        tabs: tabsRef.current,
+        wordWrap,
+        fontSize,
+      });
+    };
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") flush();
+    });
+    return () => window.removeEventListener("beforeunload", flush);
+  }, [wordWrap, fontSize]);
 
   const allThemes = useMemo(() => {
     void catalogTick;
@@ -479,6 +537,21 @@ export default function App() {
           })();
         },
         exitDiff: () => setDiff(null),
+        toggleRememberSession: () => {
+          const next = !isRememberSessionEnabled();
+          setRememberSessionEnabled(next);
+          if (next) {
+            void saveSession({
+              activeId: activeIdRef.current,
+              tabs: tabsRef.current,
+              wordWrap,
+              fontSize,
+            });
+            notify("Session restore ON — tabs & unsaved edits kept for next launch");
+          } else {
+            notify("Session restore OFF");
+          }
+        },
         macroStart: () => {
           setMacroBuffer([]);
           setRecording(true);
@@ -556,6 +629,8 @@ export default function App() {
       recording,
       savedMacros.length,
       transformSelectionOrDoc,
+      wordWrap,
+      fontSize,
     ],
   );
 
