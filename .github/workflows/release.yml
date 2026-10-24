@@ -1,0 +1,102 @@
+# Build and publish npp-x installers for major desktop targets.
+# Local cross-builds from one OS are not practical for Tauri; CI runners do this.
+#
+# Triggers: tag v*  OR  Actions → Release → Run workflow
+# Private-repo note: GitHub’s free ubuntu-*-arm runners are public-repo only,
+# so Linux here is x64. macOS ships both Apple Silicon and Intel.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.0). Leave empty to use package version."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+            name: macOS Apple Silicon
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+            name: macOS Intel
+          - platform: ubuntu-22.04
+            args: ""
+            name: Linux x64
+          - platform: windows-latest
+            args: ""
+            name: Windows x64
+
+    runs-on: ${{ matrix.platform }}
+    name: ${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux deps
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            xdg-utils
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build & upload release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || 'v__VERSION__' }}
+          releaseName: "npp-x v__VERSION__"
+          releaseBody: |
+            Cross-platform Notepad++-inspired editor (Tauri 2 + React + Monaco).
+
+            ### Downloads
+            Pick the asset for your OS/CPU. macOS builds are ad-hoc signed (unsigned Apple ID) — right-click → Open the first time if Gatekeeper warns.
+
+            | Platform | Typical asset |
+            |----------|----------------|
+            | macOS Apple Silicon | `.dmg` / `.app.tar.gz` (`aarch64`) |
+            | macOS Intel | `.dmg` / `.app.tar.gz` (`x64`) |
+            | Windows x64 | `.msi` / `.exe` |
+            | Linux x64 | `.AppImage` / `.deb` |
+
+            Linux ARM and Windows ARM need a public repo (or paid runners) — not included in this private-repo matrix.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
