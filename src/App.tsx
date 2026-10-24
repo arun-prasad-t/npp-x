@@ -695,14 +695,17 @@ export default function App() {
   );
 
   useEffect(() => {
+    // Capture phase: own Cmd/Ctrl shortcuts before Monaco/WebView can eat them
+    // (WKWebView on macOS often breaks Monaco's built-in clipboard actions).
     const onKey = (e: KeyboardEvent) => {
       const binding = matchShortcut(e);
       if (!binding) return;
       e.preventDefault();
+      e.stopPropagation();
       void runCommand(binding.id);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [runCommand]);
 
   return (

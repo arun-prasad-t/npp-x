@@ -1,4 +1,5 @@
 import type { editor as MonacoEditor } from "monaco-editor";
+import { editorCopy, editorCut, editorPaste } from "./clipboard";
 import { formatJson, formatXml } from "./formatters";
 import { CMD } from "./npp/shortcuts";
 import { NPPX } from "./npp/menus";
@@ -217,11 +218,11 @@ export async function dispatchCommand(
       return;
 
     case CMD.IDM_EDIT_CUT:
-      return void trigger("editor.action.clipboardCutAction");
+      return void editorCut(ed);
     case CMD.IDM_EDIT_COPY:
-      return void trigger("editor.action.clipboardCopyAction");
+      return void editorCopy(ed);
     case CMD.IDM_EDIT_PASTE:
-      return void trigger("editor.action.clipboardPasteAction");
+      return void editorPaste(ed);
     case CMD.IDM_EDIT_SELECTALL:
       return void trigger("editor.action.selectAll");
     case CMD.IDM_EDIT_DELETE:
