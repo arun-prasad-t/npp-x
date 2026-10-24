@@ -39,6 +39,7 @@ import {
   saveSession,
   setRememberSessionEnabled,
 } from "./lib/session";
+import { checkForUpdate, installAvailableUpdate } from "./lib/updater";
 import { isTauri, readTextFile, writeTextFile } from "./lib/tauri";
 import "./App.css";
 
@@ -201,6 +202,25 @@ export default function App() {
     setToast(message);
     window.setTimeout(() => setToast(null), 2600);
   }, []);
+
+  // Desktop: quiet update check a few seconds after launch
+  useEffect(() => {
+    if (!isTauri()) return;
+    const t = window.setTimeout(() => {
+      void (async () => {
+        const result = await checkForUpdate();
+        if (result.kind !== "available") return;
+        const ok = window.confirm(
+          `npp-x ${result.version} is available.\n\n${result.notes?.slice(0, 280) ?? "Update from GitHub Releases."}\n\nDownload and install now?`,
+        );
+        if (!ok) return;
+        notify("Downloading update…");
+        const installed = await installAvailableUpdate();
+        if (installed.kind === "error") notify(`Update failed: ${installed.message}`);
+      })();
+    }, 4000);
+    return () => window.clearTimeout(t);
+  }, [notify]);
 
   const applyTheme = useCallback(async (theme: ThemePackage) => {
     applyChromeTheme(theme);
@@ -552,6 +572,45 @@ export default function App() {
           } else {
             notify("Session restore OFF");
           }
+        },
+        checkForUpdates: (interactive) => {
+          void (async () => {
+            if (!isTauri()) {
+              if (interactive) {
+                window.open(
+                  "https://github.com/arun-prasad-t/npp-x/releases/latest",
+                  "_blank",
+                );
+                notify("Browser host — opened GitHub Releases");
+              }
+              return;
+            }
+            if (interactive) notify("Checking for updates…");
+            const result = await checkForUpdate();
+            if (result.kind === "up-to-date") {
+              if (interactive) notify("You’re on the latest version");
+              return;
+            }
+            if (result.kind === "error") {
+              if (interactive) notify(`Update check failed: ${result.message}`);
+              return;
+            }
+            if (result.kind !== "available") return;
+            const ok = window.confirm(
+              `npp-x ${result.version} is available.\n\nInstall update from GitHub Releases now?`,
+            );
+            if (!ok) return;
+            notify("Downloading update…");
+            const installed = await installAvailableUpdate();
+            if (installed.kind === "error") {
+              notify(`Update failed: ${installed.message}`);
+            }
+          })();
+        },
+        showAbout: () => {
+          window.alert(
+            "npp-x — cross-platform Notepad++-inspired editor\n\nUpdates: Help → Check for Updates (desktop)\nSession restore keeps unsaved tabs across relaunch.\n\nhttps://github.com/arun-prasad-t/npp-x",
+          );
         },
         macroStart: () => {
           setMacroBuffer([]);

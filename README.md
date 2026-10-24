@@ -64,6 +64,7 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 | **Diff check** | View → Compare Tabs or Compare with Clipboard — side-by-side Monaco diff. |
 | **Theme & Plugin stores** | Install from **file or git URL** in one click. |
 | **Cross-platform** | Linux · macOS · Windows from one codebase; browser demo host for quick tryouts. |
+| **Auto-update (desktop)** | Checks **GitHub Releases** (`latest.json`) on launch; Help → Check for Updates. |
 | **2026 chrome** | Dense slate IDE UI, Plus Jakarta Sans, run-green accent, accessible focus. |
 
 ### Session restore & browser storage
@@ -145,6 +146,7 @@ Full guide: [docs/MACOS-OPEN.md](docs/MACOS-OPEN.md). (Apple notarization = paid
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
 | [docs/REA-RECONSTRUCTION.md](docs/REA-RECONSTRUCTION.md) | How N++ 8.8.1 informed the UI |
 | [design-system/npp-x/MASTER.md](design-system/npp-x/MASTER.md) | UI tokens (ui-ux-pro-max) |
+| [docs/UPDATES.md](docs/UPDATES.md) | GitHub Releases auto-updater |
 
 **CODEOWNER:** [@arun-prasad-t](https://github.com/arun-prasad-t)
 

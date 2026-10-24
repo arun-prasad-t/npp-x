@@ -257,6 +257,14 @@ export const TOP_MENUS: TopMenu[] = [
     label: "Run",
     items: [item("IDM_EXECUTE", "Run...")],
   },
+  {
+    label: "Help",
+    items: [
+      { kind: "item", id: -1040, label: "Check for Updates…" },
+      sep(),
+      item("IDM_ABOUT", "About npp-x…"),
+    ],
+  },
 ];
 
 /** Synthetic IDs for npp-x chrome actions */
@@ -272,4 +280,5 @@ export const NPPX = {
   DIFF_CLIPBOARD: -1021,
   DIFF_EXIT: -1022,
   REMEMBER_SESSION: -1030,
+  CHECK_UPDATES: -1040,
 } as const;
