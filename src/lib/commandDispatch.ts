@@ -14,6 +14,8 @@ export type DispatchContext = {
   openDiffClipboard: () => void;
   exitDiff: () => void;
   toggleRememberSession: () => void;
+  checkForUpdates: (interactive: boolean) => void;
+  showAbout: () => void;
   // file ops
   newFile: () => void;
   openFile: () => void;
@@ -422,6 +424,11 @@ export async function dispatchCommand(
 
     case NPPX.REMEMBER_SESSION:
       return ctx.toggleRememberSession();
+
+    case NPPX.CHECK_UPDATES:
+      return ctx.checkForUpdates(true);
+    case CMD.IDM_ABOUT:
+      return ctx.showAbout();
 
     default:
       ctx.notify(`Command ${id} is on the N++ map but not implemented yet`);
