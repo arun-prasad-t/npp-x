@@ -11,6 +11,7 @@ import {
   createUntitled,
   type DocumentTab,
 } from "./lib/documents";
+import { ENCODINGS, monacoForLanguage } from "./lib/languages";
 import { isTauri, readTextFile, writeTextFile } from "./lib/tauri";
 import "./App.css";
 
@@ -254,6 +255,10 @@ export default function App() {
         onSelectAll={() =>
           editorRef.current?.trigger("menu", "editor.action.selectAll", null)
         }
+        language={active?.language ?? "normal"}
+        encoding={active?.encoding ?? "UTF-8"}
+        onLanguageChange={(key) => updateActive({ language: key })}
+        onEncodingChange={(encoding) => updateActive({ encoding })}
       />
 
       <TabBar
@@ -281,7 +286,7 @@ export default function App() {
           key={active?.id}
           height="100%"
           theme={dark ? "vs-dark" : "vs"}
-          language={active?.language ?? "plaintext"}
+          language={monacoForLanguage(active?.language ?? "normal")}
           value={active?.content ?? ""}
           onMount={onMount}
           onChange={(value) =>
@@ -307,8 +312,10 @@ export default function App() {
         length={active?.content.length ?? 0}
         selection={cursor.selection}
         encoding={active?.encoding ?? "UTF-8"}
-        language={active?.language ?? "plaintext"}
-        onLanguageChange={(id) => updateActive({ language: id })}
+        language={active?.language ?? "normal"}
+        onLanguageChange={(key) => updateActive({ language: key })}
+        onEncodingChange={(encoding) => updateActive({ encoding })}
+        encodings={ENCODINGS}
         path={active?.path ?? null}
       />
     </div>

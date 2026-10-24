@@ -1,4 +1,4 @@
-import { LANGUAGES, labelForLanguage } from "../lib/languages";
+import { LANGUAGE_MENU } from "../lib/languages";
 
 type Props = {
   line: number;
@@ -8,7 +8,9 @@ type Props = {
   encoding: string;
   language: string;
   onLanguageChange: (id: string) => void;
+  onEncodingChange: (encoding: string) => void;
   path: string | null;
+  encodings: readonly string[];
 };
 
 export function StatusBar(props: Props) {
@@ -18,25 +20,35 @@ export function StatusBar(props: Props) {
         {props.path ?? "new"}
       </span>
       <span>
-        Ln : {props.line}  Col : {props.column}
+        Ln : {props.line}&nbsp;&nbsp;Col : {props.column}
       </span>
       <span>Sel : {props.selection}</span>
       <span>length : {props.length}</span>
-      <span>{props.encoding}</span>
+      <label className="status-encoding">
+        <select
+          value={props.encoding}
+          onChange={(e) => props.onEncodingChange(e.target.value)}
+          aria-label="Encoding"
+        >
+          {props.encodings.map((enc) => (
+            <option key={enc} value={enc}>
+              {enc}
+            </option>
+          ))}
+        </select>
+      </label>
       <label className="status-lang">
-        <span className="sr-only">Language</span>
         <select
           value={props.language}
           onChange={(e) => props.onLanguageChange(e.target.value)}
           aria-label="Language"
         >
-          {LANGUAGES.map((lang) => (
-            <option key={lang.id} value={lang.id}>
+          {LANGUAGE_MENU.map((lang) => (
+            <option key={lang.key} value={lang.key}>
               {lang.label}
             </option>
           ))}
         </select>
-        <span className="status-lang-label">{labelForLanguage(props.language)}</span>
       </label>
     </footer>
   );

@@ -1,7 +1,8 @@
 /**
  * Menu labels mirrored from Notepad++ 8.8.1 english.xml (REA shipped-artifact).
- * v1 implements File / Edit / Search / View core commands only.
  */
+import { ENCODINGS, LANGUAGE_MENU } from "../lib/languages";
+
 type Props = {
   onNew: () => void;
   onOpen: () => void;
@@ -21,6 +22,10 @@ type Props = {
   onCopy: () => void;
   onPaste: () => void;
   onSelectAll: () => void;
+  language: string;
+  encoding: string;
+  onLanguageChange: (id: string) => void;
+  onEncodingChange: (encoding: string) => void;
 };
 
 function Item({
@@ -105,6 +110,38 @@ export function MenuBar(props: Props) {
             label={props.dark ? "Light Mode" : "Dark Mode"}
             onClick={props.onThemeToggle}
           />
+        </div>
+      </div>
+
+      <div className="menu">
+        <button type="button" className="menu-trigger">
+          Encoding
+        </button>
+        <div className="menu-dropdown" role="menu">
+          {ENCODINGS.map((enc) => (
+            <Item
+              key={enc}
+              label={enc}
+              checked={props.encoding === enc}
+              onClick={() => props.onEncodingChange(enc)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="menu menu-scroll">
+        <button type="button" className="menu-trigger">
+          Language
+        </button>
+        <div className="menu-dropdown" role="menu">
+          {LANGUAGE_MENU.map((lang) => (
+            <Item
+              key={lang.key}
+              label={lang.label}
+              checked={props.language === lang.key}
+              onClick={() => props.onLanguageChange(lang.key)}
+            />
+          ))}
         </div>
       </div>
 

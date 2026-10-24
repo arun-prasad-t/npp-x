@@ -46,9 +46,12 @@ body,
 }
 
 .npp-shell {
-  display: grid;
-  grid-template-rows: auto auto auto 1fr auto;
+  /* Flex — not grid. FindBar unmounts when closed; a 5-row grid then
+     assigned 1fr to the status bar and collapsed the editor. */
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  min-height: 0;
   background:
     linear-gradient(180deg, rgba(95, 154, 47, 0.08), transparent 120px),
     radial-gradient(1200px 400px at 10% -10%, rgba(95, 154, 47, 0.12), transparent),
@@ -225,8 +228,7 @@ body,
   flex-wrap: wrap;
 }
 
-.find-actions button,
-.status-lang select {
+.find-actions button {
   appearance: none;
   border: 1px solid var(--npp-border);
   background: var(--npp-tab-active);
@@ -238,25 +240,55 @@ body,
   cursor: pointer;
 }
 
+.status-encoding select,
+.status-lang select {
+  appearance: auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  max-width: 160px;
+}
+
 .find-actions button.ghost {
   background: transparent;
 }
 
 .editor-pane {
+  flex: 1 1 auto;
   min-height: 0;
-  border-top: 1px solid transparent;
+  position: relative;
   background: var(--npp-tab-active);
 }
 
+.editor-pane > section,
+.editor-pane .monaco-editor {
+  height: 100% !important;
+}
+
 .status-bar {
+  flex: 0 0 auto;
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: center;
-  padding: 4px 10px;
+  flex-wrap: nowrap;
+  gap: 0;
+  align-items: stretch;
+  padding: 0;
   font-size: 12px;
   background: linear-gradient(180deg, var(--npp-status), var(--npp-chrome-2));
   border-top: 1px solid var(--npp-border);
+  overflow: hidden;
+}
+
+.status-bar > span,
+.status-bar > label {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-right: 1px solid var(--npp-border);
+  white-space: nowrap;
 }
 
 .status-path {
@@ -269,22 +301,13 @@ body,
 
 .status-lang {
   margin-left: auto;
-  position: relative;
+  border-right: none !important;
 }
 
-.status-lang select {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.status-lang-label {
-  display: inline-block;
-  padding: 2px 8px;
-  border: 1px solid var(--npp-border);
-  border-radius: 3px;
-  background: var(--npp-tab-active);
+.menu.menu-scroll .menu-dropdown {
+  max-height: min(70vh, 420px);
+  overflow-y: auto;
+  min-width: 200px;
 }
 
 .sr-only {

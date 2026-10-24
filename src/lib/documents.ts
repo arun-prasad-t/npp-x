@@ -19,7 +19,7 @@ export function createUntitled(): DocumentTab {
     name: `new ${n}`,
     path: null,
     content: "",
-    language: "plaintext",
+    language: "normal",
     dirty: false,
     encoding: "UTF-8",
   };
