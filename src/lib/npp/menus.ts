@@ -180,6 +180,7 @@ export const TOP_MENUS: TopMenu[] = [
     items: [
       item("IDM_SETTING_PREFERENCE", "Preferences..."),
       item("IDM_SETTING_SHORTCUT_MAPPER", "Shortcut Mapper..."),
+      { kind: "item", id: -1030, label: "Remember session for next launch" },
       sep(),
       item("IDM_SETTING_IMPORTSTYLETHEMES", "Import style theme(s)..."),
       item("IDM_SETTING_IMPORTPLUGIN", "Import plugin(s)..."),
@@ -270,4 +271,5 @@ export const NPPX = {
   DIFF_TABS: -1020,
   DIFF_CLIPBOARD: -1021,
   DIFF_EXIT: -1022,
+  REMEMBER_SESSION: -1030,
 } as const;

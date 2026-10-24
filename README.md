@@ -61,6 +61,7 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 - Find & Replace · Encoding & Language menus · status bar (Ln / Col / Sel / encoding / language)  
 - **JSON / XML pretty-print & minify** (Tools menu) — works in desktop and browser host  
 - **Diff check** — View → Compare Tabs / Compare with Clipboard  
+- **Session restore** — unsaved tabs survive quit/relaunch (like N++)  
 - N++-shaped menus, shortcuts, macros & tools surface (reconstructed)  
 - Built-in themes including **npp-x 2026** · Theme Store + Plugin Store  
 - Default plugins parity targets: mimeTools / NppConverter / NppExport style contributions  
@@ -91,7 +92,15 @@ npm run dev
 npm run tauri build   # local, current OS only
 ```
 
-**macOS users:** Gatekeeper may block unsigned/ad-hoc downloads — see [docs/MACOS-OPEN.md](docs/MACOS-OPEN.md) (right-click → Open, or `xattr -cr`).
+**macOS (Sequoia / 15+):** Control-click → Open no longer works. After installing:
+
+1. Double-click `npp-x.app` → click **Done** / **Cancel** (not Trash)
+2. **System Settings → Privacy & Security** → scroll to the **bottom** → **Open Anyway**
+3. Or Terminal: `xattr -cr /Applications/npp-x.app && open /Applications/npp-x.app`
+
+Full guide: [docs/MACOS-OPEN.md](docs/MACOS-OPEN.md). (Apple notarization = paid Developer account — later.)
+
+**Session restore (N++ classic):** Open many files, edit without saving, quit — relaunch and **everything comes back** (tabs + unsaved buffers). Toggle: Settings → Remember session for next launch. Works in desktop and browser host.
 
 **App icons:** regenerate from the brand mark with `npx tauri icon branding/app-icon.png`.
 
