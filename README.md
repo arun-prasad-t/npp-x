@@ -59,6 +59,8 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 
 - Multi-tab documents · New / Open / Save / Save As / Close  
 - Find & Replace · Encoding & Language menus · status bar (Ln / Col / Sel / encoding / language)  
+- **JSON / XML pretty-print & minify** (Tools menu) — works in desktop and browser host  
+- **Diff check** — View → Compare Tabs / Compare with Clipboard  
 - N++-shaped menus, shortcuts, macros & tools surface (reconstructed)  
 - Built-in themes including **npp-x 2026** · Theme Store + Plugin Store  
 - Default plugins parity targets: mimeTools / NppConverter / NppExport style contributions  

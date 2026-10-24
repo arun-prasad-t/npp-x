@@ -8,6 +8,8 @@ import { StatusBar } from "./components/StatusBar";
 import { FindBar } from "./components/FindBar";
 import { MarketplacePanel } from "./components/MarketplacePanel";
 import { ShortcutMapper } from "./components/ShortcutMapper";
+import { DiffPane } from "./components/DiffPane";
+import { formatJson, formatXml } from "./lib/formatters";
 import {
   createFromFile,
   createUntitled,
@@ -85,6 +87,12 @@ export default function App() {
       return [];
     }
   });
+  const [diff, setDiff] = useState<{
+    original: string;
+    modified: string;
+    language: string;
+    label: string;
+  } | null>(null);
 
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
   const commandHandlers = useRef<Map<string, () => void | Promise<void>>>(
@@ -412,6 +420,65 @@ export default function App() {
           setMarketOpen(true);
         },
         openShortcutMapper: () => setShortcutOpen(true),
+        formatDocument: (kind, minify) => {
+          try {
+            const src = tabs.find((t) => t.id === activeIdRef.current)?.content ?? "";
+            const next =
+              kind === "json" ? formatJson(src, minify) : formatXml(src, minify);
+            updateActive({
+              content: next,
+              dirty: true,
+              language: kind === "json" ? "json" : "xml",
+            });
+            notify(minify ? `${kind.toUpperCase()} minified` : `${kind.toUpperCase()} formatted`);
+          } catch (e) {
+            notify(
+              `${kind.toUpperCase()} format failed: ${e instanceof Error ? e.message : String(e)}`,
+            );
+          }
+        },
+        openDiffTabs: () => {
+          const list = tabs;
+          if (list.length < 2) {
+            notify("Open at least two tabs to compare");
+            return;
+          }
+          const names = list.map((t, i) => `${i + 1}. ${t.name}`).join("\n");
+          const pick = window.prompt(
+            `Compare active tab with which tab number?\n${names}`,
+            list.findIndex((t) => t.id !== activeIdRef.current) + 1 + "",
+          );
+          const idx = Number(pick) - 1;
+          const other = list[idx];
+          const cur = list.find((t) => t.id === activeIdRef.current);
+          if (!other || !cur || other.id === cur.id) {
+            notify("Invalid tab selection");
+            return;
+          }
+          setDiff({
+            original: other.content,
+            modified: cur.content,
+            language: monacoForLanguage(cur.language),
+            label: `Diff: ${other.name} ← → ${cur.name}`,
+          });
+        },
+        openDiffClipboard: () => {
+          void (async () => {
+            try {
+              const clip = await navigator.clipboard.readText();
+              const cur = tabs.find((t) => t.id === activeIdRef.current);
+              setDiff({
+                original: clip,
+                modified: cur?.content ?? "",
+                language: monacoForLanguage(cur?.language ?? "normal"),
+                label: "Diff: Clipboard ← → Active",
+              });
+            } catch {
+              notify("Clipboard read failed — allow clipboard permission");
+            }
+          })();
+        },
+        exitDiff: () => setDiff(null),
         macroStart: () => {
           setMacroBuffer([]);
           setRecording(true);
@@ -552,32 +619,44 @@ export default function App() {
       />
 
       <div className="editor-pane">
-        <Editor
-          key={active?.id}
-          height="100%"
-          theme={monacoThemeName}
-          language={monacoForLanguage(active?.language ?? "normal")}
-          value={active?.content ?? ""}
-          onMount={onMount}
-          onChange={(value) =>
-            updateActive({ content: value ?? "", dirty: true })
-          }
-          options={{
-            fontFamily:
-              "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
-            fontSize,
-            minimap: { enabled: true },
-            lineNumbers: "on",
-            wordWrap: wordWrap ? "on" : "off",
-            automaticLayout: true,
-            scrollBeyondLastLine: false,
-            renderWhitespace: "selection",
-            tabSize: 4,
-            smoothScrolling: true,
-            cursorBlinking: "smooth",
-            cursorSmoothCaretAnimation: "on",
-          }}
-        />
+        {diff ? (
+          <DiffPane
+            original={diff.original}
+            modified={diff.modified}
+            language={diff.language}
+            theme={monacoThemeName}
+            fontSize={fontSize}
+            label={diff.label}
+            onExit={() => setDiff(null)}
+          />
+        ) : (
+          <Editor
+            key={active?.id}
+            height="100%"
+            theme={monacoThemeName}
+            language={monacoForLanguage(active?.language ?? "normal")}
+            value={active?.content ?? ""}
+            onMount={onMount}
+            onChange={(value) =>
+              updateActive({ content: value ?? "", dirty: true })
+            }
+            options={{
+              fontFamily:
+                "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
+              fontSize,
+              minimap: { enabled: true },
+              lineNumbers: "on",
+              wordWrap: wordWrap ? "on" : "off",
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
+              renderWhitespace: "selection",
+              tabSize: 4,
+              smoothScrolling: true,
+              cursorBlinking: "smooth",
+              cursorSmoothCaretAnimation: "on",
+            }}
+          />
+        )}
       </div>
 
       <StatusBar
