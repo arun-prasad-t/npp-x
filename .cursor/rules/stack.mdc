@@ -1,0 +1,17 @@
+---
+description: npp-x stack and architecture conventions
+alwaysApply: true
+---
+
+# Stack
+
+- **Desktop:** Tauri 2 + Rust (`src-tauri/`)
+- **UI:** React + TypeScript + Vite + Monaco (`src/`)
+- **Not** Next.js — static `dist/` can be hosted as a browser demo; native FS needs Tauri
+
+## Conventions
+
+- Keep chrome tokens in CSS / theme packages (`npp-x.theme/1`); don’t sprinkle raw hex in components when a token exists
+- Design system source: `design-system/npp-x/MASTER.md` (+ page overrides)
+- Brand voice: `docs/brand-guidelines.md`
+- Plugins/themes: schemas in CONTRIBUTING.md; examples under `community/examples/`

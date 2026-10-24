@@ -1,0 +1,13 @@
+# Default owner for everything in this repository.
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+*       @arun-prasad-t
+
+# Keep ownership explicit on sensitive / release paths
+/.github/                       @arun-prasad-t
+/src-tauri/                     @arun-prasad-t
+/docs/                          @arun-prasad-t
+/design-system/                 @arun-prasad-t
+/LICENSE                        @arun-prasad-t
+/SECURITY.md                    @arun-prasad-t
+/CODE_OF_CONDUCT.md             @arun-prasad-t

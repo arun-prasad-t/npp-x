@@ -1,4 +1,20 @@
-# Contributing themes & plugins to npp-x
+# Contributing to npp-x
+
+Thanks for helping. Maintainer / CODEOWNER: **[@arun-prasad-t](https://github.com/arun-prasad-t)**.
+
+Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Security issues → [SECURITY.md](SECURITY.md) (not public issues).
+
+## Pull requests
+
+1. Fork and branch from `main`.
+2. Keep PRs focused; fill out the PR template.
+3. Don’t commit secrets, signing keys, or private REA / N++ binary dumps.
+4. CODEOWNERS will request review from `@arun-prasad-t`.
+5. `npm run build` should pass before you ask for merge.
+
+---
+
+# Themes & plugins
 
 Anyone can ship a theme or plugin as a **JSON file** or a **public git repo**, then install it in **Theme Store** / **Plugin Store** via:
 

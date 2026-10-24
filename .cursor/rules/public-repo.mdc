@@ -1,0 +1,35 @@
+---
+description: Public-repo safety and contribution norms for npp-x
+alwaysApply: true
+---
+
+# Public repository rules
+
+npp-x is a **public** open-source project. Follow these when editing or reviewing.
+
+## Never commit
+
+- Secrets, tokens, `.env` with credentials, signing keys, Apple/Windows certs
+- Private REA dumps, Notepad++ portable binaries, or large reconstructed artifacts (keep outside the repo; document paths in `docs/REA-RECONSTRUCTION.md` only)
+- Personal notes that name private machines, emails beyond what’s already public, or unpublished vuln details
+
+## Attribution & trademarks
+
+- npp-x is **inspired by / reconstructed from** Notepad++ — it is **not** the official Notepad++ project
+- Do not claim Don Ho / Notepad++ endorsement
+- Prefer “N++-inspired” / “reconstructed from N++ 8.8.1” wording in user-facing copy
+
+## Ownership
+
+- Default CODEOWNER is `@arun-prasad-t` (see `.github/CODEOWNERS`)
+- Prefer PRs over direct `main` pushes for shared work; keep `main` releasable
+
+## License
+
+- Project license is **MIT** (`LICENSE`)
+- Don’t add GPL-only dependencies without an explicit maintainer decision
+
+## Security
+
+- Public issues for bugs; private advisories for vulns (`SECURITY.md`)
+- Treat third-party theme/plugin packages as untrusted code

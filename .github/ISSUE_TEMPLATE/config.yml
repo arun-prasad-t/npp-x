@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/arun-prasad-t/npp-x/security/advisories/new
+    about: Privately report a security issue (do not file a public bug).
+  - name: Theme / plugin packages
+    url: https://github.com/arun-prasad-t/npp-x/blob/main/CONTRIBUTING.md
+    about: How to ship themes and plugins via file or git URL.
