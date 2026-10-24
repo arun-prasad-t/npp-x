@@ -1,6 +1,6 @@
 type Props = { size?: number; className?: string };
 
-export function Logo({ size = 22, className }: Props) {
+export function Logo({ size = 24, className }: Props) {
   return (
     <img
       src="/logo.svg"
@@ -9,6 +9,7 @@ export function Logo({ size = 22, className }: Props) {
       alt="npp-x"
       className={className}
       draggable={false}
+      decoding="async"
     />
   );
 }

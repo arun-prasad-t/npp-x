@@ -230,7 +230,9 @@ select,
 }
 
 .brand-chip img {
-  border-radius: 6px;
+  border-radius: 7px;
+  display: block;
+  flex-shrink: 0;
 }
 
 .tab-bar {

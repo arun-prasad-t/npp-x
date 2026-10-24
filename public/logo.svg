@@ -1,16 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="npp-x">
-  <defs>
-    <linearGradient id="g" x1="12" y1="8" x2="116" y2="120" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#22C55E"/>
-      <stop offset="0.55" stop-color="#16A34A"/>
-      <stop offset="1" stop-color="#14532D"/>
-    </linearGradient>
-    <linearGradient id="g2" x1="40" y1="28" x2="98" y2="96" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#BBF7D0"/>
-      <stop offset="1" stop-color="#4ADE80"/>
-    </linearGradient>
-  </defs>
-  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#g)"/>
-  <path d="M34 34h28c12.15 0 22 9.85 22 22v4c0 12.15-9.85 22-22 22H46v16H34V34zm28 14H46v20h16c4.418 0 8-3.582 8-8v-4c0-4.418-3.582-8-8-8z" fill="#F0FDF4"/>
-  <path d="M86 70l10-10 8 8-10 10 10 10-8 8-10-10-10 10-8-8 10-10-10-10 8-8 10 10z" fill="url(#g2)"/>
+  <!-- Flat monogram: clear lowercase n + x -->
+  <rect width="128" height="128" rx="28" fill="#15803D"/>
+  <!-- lowercase n -->
+  <path
+    fill="#F0FDF4"
+    d="M28 98V52c0-2.2 1.8-4 4-4h6c2.2 0 4 1.8 4 4v8.2c3.8-7.2 11.2-11.2 19.4-11.2 12.6 0 22.6 9.2 22.6 23.4V98h-14V72.4c0-7.4-5.2-12.6-12.2-12.6-7.4 0-13.2 5.6-13.2 14.2V98H28z"
+  />
+  <!-- x -->
+  <path
+    d="M90 44l22 22m0-22L90 66"
+    fill="none"
+    stroke="#BBF7D0"
+    stroke-width="11"
+    stroke-linecap="round"
+  />
 </svg>
