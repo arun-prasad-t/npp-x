@@ -2,6 +2,8 @@
  * Menu labels mirrored from Notepad++ 8.8.1 english.xml (REA shipped-artifact).
  */
 import { ENCODINGS, LANGUAGE_MENU } from "../lib/languages";
+import type { PluginPackage } from "../lib/plugins";
+import { Logo } from "./Logo";
 
 type Props = {
   onNew: () => void;
@@ -14,8 +16,6 @@ type Props = {
   onReplace: () => void;
   onWordWrap: () => void;
   wordWrap: boolean;
-  onThemeToggle: () => void;
-  dark: boolean;
   onUndo: () => void;
   onRedo: () => void;
   onCut: () => void;
@@ -26,6 +26,10 @@ type Props = {
   encoding: string;
   onLanguageChange: (id: string) => void;
   onEncodingChange: (encoding: string) => void;
+  onOpenThemeStore: () => void;
+  onOpenPluginStore: () => void;
+  pluginCommands: Array<{ plugin: PluginPackage; id: string; title: string }>;
+  onPluginCommand: (plugin: PluginPackage, commandId: string) => void;
 };
 
 function Item({
@@ -106,10 +110,7 @@ export function MenuBar(props: Props) {
             checked={props.wordWrap}
             onClick={props.onWordWrap}
           />
-          <Item
-            label={props.dark ? "Light Mode" : "Dark Mode"}
-            onClick={props.onThemeToggle}
-          />
+          <Item label="Theme Store…" onClick={props.onOpenThemeStore} />
         </div>
       </div>
 
@@ -145,8 +146,26 @@ export function MenuBar(props: Props) {
         </div>
       </div>
 
-      <div className="brand-chip" title="npp-x — cross-platform N++ inspired editor">
-        npp-x
+      <div className="menu">
+        <button type="button" className="menu-trigger">
+          Plugins
+        </button>
+        <div className="menu-dropdown" role="menu">
+          <Item label="Plugin Store…" onClick={props.onOpenPluginStore} />
+          {props.pluginCommands.length ? <div className="menu-sep" /> : null}
+          {props.pluginCommands.map((cmd) => (
+            <Item
+              key={`${cmd.plugin.id}:${cmd.id}`}
+              label={cmd.title}
+              onClick={() => props.onPluginCommand(cmd.plugin, cmd.id)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="brand-chip" title="npp-x">
+        <Logo size={18} />
+        <span>npp-x</span>
       </div>
     </nav>
   );

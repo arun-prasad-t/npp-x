@@ -9,9 +9,13 @@ Stack: **Tauri 2 + Rust + React + Monaco**, reconstructed from Notepad++ 8.8.1 s
 - Multi-tab documents
 - New / Open / Save / Save As / Close (native dialogs in Tauri)
 - Find & Replace
-- Word wrap, light/dark chrome
-- Status bar: line, column, selection length, encoding, language
-- Syntax highlighting via Monaco (N++ language subset)
+- **Theme Store** — apply built-ins or install themes from **file / git URL**
+- **Plugin Store** — enable community plugins; install from **file / git URL**
+- Encoding + Language menus (N++-style)
+- Status bar: line, column, selection, encoding, language
+- Syntax highlighting via Monaco
+
+Community packages: see [CONTRIBUTING.md](CONTRIBUTING.md) and `community/examples/`.
 
 ## Prerequisites
 

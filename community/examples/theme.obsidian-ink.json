@@ -1,0 +1,32 @@
+{
+  "schema": "npp-x.theme/1",
+  "id": "community-obsidian-ink",
+  "name": "Community Obsidian Ink",
+  "author": "community",
+  "version": "1.0.0",
+  "description": "Example theme package — install via file or raw git URL.",
+  "chrome": {
+    "--npp-chrome": "#0f1115",
+    "--npp-chrome-2": "#0a0c10",
+    "--npp-border": "#262b36",
+    "--npp-text": "#e8ecf4",
+    "--npp-accent": "#9ae66e",
+    "--npp-accent-deep": "#c8f5a3",
+    "--npp-tab": "#161a22",
+    "--npp-tab-active": "#1c2230",
+    "--npp-status": "#0c0e13",
+    "--npp-menu-bg": "#161a22",
+    "--npp-find": "#12161e",
+    "--npp-shadow": "0 16px 40px rgba(0, 0, 0, 0.55)",
+    "color-scheme": "dark"
+  },
+  "monaco": {
+    "base": "vs-dark",
+    "inherit": true,
+    "rules": [{ "token": "keyword", "foreground": "9ae66e" }],
+    "colors": {
+      "editor.background": "#0f1115",
+      "editorCursor.foreground": "#9ae66e"
+    }
+  }
+}

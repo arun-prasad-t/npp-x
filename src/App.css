@@ -140,14 +140,21 @@ body,
 
 .brand-chip {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--npp-accent-deep);
   font-size: 12px;
-  padding: 2px 8px;
+  padding: 2px 10px 2px 4px;
   border: 1px solid color-mix(in srgb, var(--npp-accent) 45%, var(--npp-border));
   border-radius: 999px;
   background: color-mix(in srgb, var(--npp-accent) 12%, transparent);
+}
+
+.brand-chip img {
+  border-radius: 6px;
 }
 
 .tab-bar {
@@ -319,4 +326,189 @@ body,
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
+}
+
+.toast {
+  position: fixed;
+  right: 16px;
+  bottom: 40px;
+  z-index: 40;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--npp-menu-bg) 92%, var(--npp-accent));
+  border: 1px solid var(--npp-border);
+  box-shadow: var(--npp-shadow);
+  animation: toast-in 180ms ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.market-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, #000 45%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.market-panel {
+  width: min(960px, 100%);
+  max-height: min(88vh, 900px);
+  overflow: auto;
+  border-radius: 16px;
+  background: var(--npp-menu-bg);
+  border: 1px solid var(--npp-border);
+  box-shadow: var(--npp-shadow);
+  padding: 18px;
+}
+
+.market-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.market-title {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.market-title h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.market-title p {
+  margin: 4px 0 0;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.market-install {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--npp-chrome) 80%, transparent);
+  border: 1px solid var(--npp-border);
+  margin-bottom: 16px;
+}
+
+.market-install label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.market-install input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--npp-border);
+  background: var(--npp-tab-active);
+  color: inherit;
+  font: inherit;
+}
+
+.market-install-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.market-install-actions button,
+.market-card-actions button,
+.market-header button {
+  appearance: none;
+  border: 1px solid var(--npp-border);
+  background: var(--npp-tab-active);
+  color: inherit;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.market-install-actions button:disabled,
+.market-card-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.market-card-actions button.primary {
+  background: color-mix(in srgb, var(--npp-accent) 28%, var(--npp-tab-active));
+  border-color: color-mix(in srgb, var(--npp-accent) 55%, var(--npp-border));
+}
+
+.market-status {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.market-card {
+  border: 1px solid var(--npp-border);
+  border-radius: 12px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--npp-tab) 70%, var(--npp-tab-active));
+  display: grid;
+  gap: 8px;
+}
+
+.market-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.market-card p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.75;
+  min-height: 2.4em;
+}
+
+.market-meta {
+  opacity: 0.55 !important;
+  min-height: 0 !important;
+}
+
+.theme-swatch {
+  height: 64px;
+  border-radius: 10px;
+  border: 1px solid var(--npp-border);
+}
+
+.market-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.toggle {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
 }

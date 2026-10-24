@@ -1,0 +1,15 @@
+{
+  "schema": "npp-x.plugin/1",
+  "id": "community.trim-trailing",
+  "name": "Trim Trailing Spaces",
+  "author": "community",
+  "version": "1.0.0",
+  "description": "Example plugin — strips trailing whitespace from the active document.",
+  "contributes": {
+    "commands": [
+      { "id": "community.trim", "title": "Trim Trailing Spaces" }
+    ],
+    "menus": { "tools": ["community.trim"] }
+  },
+  "code": "nppx.registerCommand(\"community.trim\", () => {\n  const next = nppx.getActiveText().replace(/[ \\t]+$/gm, \"\");\n  nppx.setActiveText(next);\n  nppx.notify(\"Trailing spaces trimmed\");\n});\n"
+}
