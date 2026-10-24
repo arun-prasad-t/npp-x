@@ -1,0 +1,810 @@
+[
+  {
+    "id": 41001,
+    "cmd": "IDM_FILE_NEW",
+    "key": "KeyN",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 41002,
+    "cmd": "IDM_FILE_OPEN",
+    "key": "KeyO",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 41014,
+    "cmd": "IDM_FILE_RELOAD",
+    "key": "KeyR",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 41006,
+    "cmd": "IDM_FILE_SAVE",
+    "key": "KeyS",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 41008,
+    "cmd": "IDM_FILE_SAVEAS",
+    "key": "KeyS",
+    "ctrl": true,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 41007,
+    "cmd": "IDM_FILE_SAVEALL",
+    "key": "KeyS",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 41003,
+    "cmd": "IDM_FILE_CLOSE",
+    "key": "KeyW",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 41004,
+    "cmd": "IDM_FILE_CLOSEALL",
+    "key": "KeyW",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 41010,
+    "cmd": "IDM_FILE_PRINT",
+    "key": "KeyP",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 41021,
+    "cmd": "IDM_FILE_RESTORELASTCLOSEDFILE",
+    "key": "KeyT",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 41011,
+    "cmd": "IDM_FILE_EXIT",
+    "key": "F4",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 42001,
+    "cmd": "IDM_EDIT_CUT",
+    "key": "Delete",
+    "ctrl": false,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 42001,
+    "cmd": "IDM_EDIT_CUT",
+    "key": "KeyX",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 42002,
+    "cmd": "IDM_EDIT_COPY",
+    "key": "Insert",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 42002,
+    "cmd": "IDM_EDIT_COPY",
+    "key": "KeyC",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 42005,
+    "cmd": "IDM_EDIT_PASTE",
+    "key": "Insert",
+    "ctrl": false,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 42005,
+    "cmd": "IDM_EDIT_PASTE",
+    "key": "KeyV",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 42020,
+    "cmd": "IDM_EDIT_BEGINENDSELECT",
+    "key": "KeyB",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 42089,
+    "cmd": "IDM_EDIT_BEGINENDSELECT_COLUMNMODE",
+    "key": "KeyB",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 42016,
+    "cmd": "IDM_EDIT_UPPERCASE",
+    "key": "KeyU",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 42017,
+    "cmd": "IDM_EDIT_LOWERCASE",
+    "key": "KeyU",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 42067,
+    "cmd": "IDM_EDIT_PROPERCASE_FORCE",
+    "key": "KeyU",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 42068,
+    "cmd": "IDM_EDIT_PROPERCASE_BLEND",
+    "key": "KeyU",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 42069,
+    "cmd": "IDM_EDIT_SENTENCECASE_FORCE",
+    "key": "KeyU",
+    "ctrl": true,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 42070,
+    "cmd": "IDM_EDIT_SENTENCECASE_BLEND",
+    "key": "KeyU",
+    "ctrl": true,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 42012,
+    "cmd": "IDM_EDIT_SPLIT_LINES",
+    "key": "KeyI",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 42013,
+    "cmd": "IDM_EDIT_JOIN_LINES",
+    "key": "KeyJ",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 42014,
+    "cmd": "IDM_EDIT_LINE_UP",
+    "key": "ArrowUp",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 42015,
+    "cmd": "IDM_EDIT_LINE_DOWN",
+    "key": "ArrowDown",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 42057,
+    "cmd": "IDM_EDIT_BLANKLINEABOVECURRENT",
+    "key": "Enter",
+    "ctrl": true,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 42058,
+    "cmd": "IDM_EDIT_BLANKLINEBELOWCURRENT",
+    "key": "Enter",
+    "ctrl": true,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 42022,
+    "cmd": "IDM_EDIT_BLOCK_COMMENT",
+    "key": "KeyQ",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 42035,
+    "cmd": "IDM_EDIT_BLOCK_COMMENT_SET",
+    "key": "KeyK",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 42036,
+    "cmd": "IDM_EDIT_BLOCK_UNCOMMENT",
+    "key": "KeyK",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 42023,
+    "cmd": "IDM_EDIT_STREAM_COMMENT",
+    "key": "KeyQ",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 42034,
+    "cmd": "IDM_EDIT_COLUMNMODE",
+    "key": "KeyC",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 43001,
+    "cmd": "IDM_SEARCH_FIND",
+    "key": "KeyF",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43013,
+    "cmd": "IDM_SEARCH_FINDINFILES",
+    "key": "KeyF",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 43002,
+    "cmd": "IDM_SEARCH_FINDNEXT",
+    "key": "F3",
+    "ctrl": false,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43010,
+    "cmd": "IDM_SEARCH_FINDPREV",
+    "key": "F3",
+    "ctrl": false,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 43048,
+    "cmd": "IDM_SEARCH_SETANDFINDNEXT",
+    "key": "F3",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43049,
+    "cmd": "IDM_SEARCH_SETANDFINDPREV",
+    "key": "F3",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 43014,
+    "cmd": "IDM_SEARCH_VOLATILE_FINDNEXT",
+    "key": "F3",
+    "ctrl": true,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 43015,
+    "cmd": "IDM_SEARCH_VOLATILE_FINDPREV",
+    "key": "F3",
+    "ctrl": true,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 43003,
+    "cmd": "IDM_SEARCH_REPLACE",
+    "key": "KeyH",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43011,
+    "cmd": "IDM_SEARCH_FINDINCREMENT",
+    "key": "KeyI",
+    "ctrl": true,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 43045,
+    "cmd": "IDM_FOCUS_ON_FOUND_RESULTS",
+    "key": "F7",
+    "ctrl": false,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43047,
+    "cmd": "IDM_SEARCH_GOTOPREVFOUND",
+    "key": "F4",
+    "ctrl": false,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 43046,
+    "cmd": "IDM_SEARCH_GOTONEXTFOUND",
+    "key": "F4",
+    "ctrl": false,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43004,
+    "cmd": "IDM_SEARCH_GOTOLINE",
+    "key": "KeyG",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43009,
+    "cmd": "IDM_SEARCH_GOTOMATCHINGBRACE",
+    "key": "KeyB",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43053,
+    "cmd": "IDM_SEARCH_SELECTMATCHINGBRACES",
+    "key": "KeyB",
+    "ctrl": true,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 43054,
+    "cmd": "IDM_SEARCH_MARK",
+    "key": "KeyM",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43033,
+    "cmd": "IDM_SEARCH_GOPREVMARKER1",
+    "key": "Digit1",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 43034,
+    "cmd": "IDM_SEARCH_GOPREVMARKER2",
+    "key": "Digit2",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 43035,
+    "cmd": "IDM_SEARCH_GOPREVMARKER3",
+    "key": "Digit3",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 43036,
+    "cmd": "IDM_SEARCH_GOPREVMARKER4",
+    "key": "Digit4",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 43037,
+    "cmd": "IDM_SEARCH_GOPREVMARKER5",
+    "key": "Digit5",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 43038,
+    "cmd": "IDM_SEARCH_GOPREVMARKER_DEF",
+    "key": "Digit0",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 43039,
+    "cmd": "IDM_SEARCH_GONEXTMARKER1",
+    "key": "Digit1",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43040,
+    "cmd": "IDM_SEARCH_GONEXTMARKER2",
+    "key": "Digit2",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43041,
+    "cmd": "IDM_SEARCH_GONEXTMARKER3",
+    "key": "Digit3",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43042,
+    "cmd": "IDM_SEARCH_GONEXTMARKER4",
+    "key": "Digit4",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43043,
+    "cmd": "IDM_SEARCH_GONEXTMARKER5",
+    "key": "Digit5",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43044,
+    "cmd": "IDM_SEARCH_GONEXTMARKER_DEF",
+    "key": "Digit0",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43005,
+    "cmd": "IDM_SEARCH_TOGGLE_BOOKMARK",
+    "key": "F2",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43006,
+    "cmd": "IDM_SEARCH_NEXT_BOOKMARK",
+    "key": "F2",
+    "ctrl": false,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 43007,
+    "cmd": "IDM_SEARCH_PREV_BOOKMARK",
+    "key": "F2",
+    "ctrl": false,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 44032,
+    "cmd": "IDM_VIEW_FULLSCREENTOGGLE",
+    "key": "F11",
+    "ctrl": false,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 44009,
+    "cmd": "IDM_VIEW_POSTIT",
+    "key": "F12",
+    "ctrl": false,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 44095,
+    "cmd": "IDM_VIEW_TAB_NEXT",
+    "key": "PageDown",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 44096,
+    "cmd": "IDM_VIEW_TAB_PREV",
+    "key": "PageUp",
+    "ctrl": true,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 44098,
+    "cmd": "IDM_VIEW_TAB_MOVEFORWARD",
+    "key": "PageDown",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 44099,
+    "cmd": "IDM_VIEW_TAB_MOVEBACKWARD",
+    "key": "PageUp",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 44042,
+    "cmd": "IDM_VIEW_HIDELINES",
+    "key": "KeyH",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44072,
+    "cmd": "IDM_VIEW_SWITCHTO_OTHER_VIEW",
+    "key": "F8",
+    "ctrl": false,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 44010,
+    "cmd": "IDM_VIEW_FOLDALL",
+    "key": "Digit0",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44029,
+    "cmd": "IDM_VIEW_UNFOLDALL",
+    "key": "Digit0",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 44030,
+    "cmd": "IDM_VIEW_FOLD_CURRENT",
+    "key": "KeyF",
+    "ctrl": true,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44031,
+    "cmd": "IDM_VIEW_UNFOLD_CURRENT",
+    "key": "KeyF",
+    "ctrl": true,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 44051,
+    "cmd": "IDM_VIEW_FOLD_1",
+    "key": "Digit1",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44052,
+    "cmd": "IDM_VIEW_FOLD_2",
+    "key": "Digit2",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44053,
+    "cmd": "IDM_VIEW_FOLD_3",
+    "key": "Digit3",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44054,
+    "cmd": "IDM_VIEW_FOLD_4",
+    "key": "Digit4",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44055,
+    "cmd": "IDM_VIEW_FOLD_5",
+    "key": "Digit5",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44056,
+    "cmd": "IDM_VIEW_FOLD_6",
+    "key": "Digit6",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44057,
+    "cmd": "IDM_VIEW_FOLD_7",
+    "key": "Digit7",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44058,
+    "cmd": "IDM_VIEW_FOLD_8",
+    "key": "Digit8",
+    "ctrl": false,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 44061,
+    "cmd": "IDM_VIEW_UNFOLD_1",
+    "key": "Digit1",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 44062,
+    "cmd": "IDM_VIEW_UNFOLD_2",
+    "key": "Digit2",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 44063,
+    "cmd": "IDM_VIEW_UNFOLD_3",
+    "key": "Digit3",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 44064,
+    "cmd": "IDM_VIEW_UNFOLD_4",
+    "key": "Digit4",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 44065,
+    "cmd": "IDM_VIEW_UNFOLD_5",
+    "key": "Digit5",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 44066,
+    "cmd": "IDM_VIEW_UNFOLD_6",
+    "key": "Digit6",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 44067,
+    "cmd": "IDM_VIEW_UNFOLD_7",
+    "key": "Digit7",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 44068,
+    "cmd": "IDM_VIEW_UNFOLD_8",
+    "key": "Digit8",
+    "ctrl": false,
+    "alt": true,
+    "shift": true
+  },
+  {
+    "id": 42026,
+    "cmd": "IDM_EDIT_RTL",
+    "key": "KeyR",
+    "ctrl": true,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 42027,
+    "cmd": "IDM_EDIT_LTR",
+    "key": "KeyL",
+    "ctrl": true,
+    "alt": true,
+    "shift": false
+  },
+  {
+    "id": 42021,
+    "cmd": "IDM_MACRO_PLAYBACKRECORDEDMACRO",
+    "key": "KeyP",
+    "ctrl": true,
+    "alt": false,
+    "shift": true
+  },
+  {
+    "id": 49000,
+    "cmd": "IDM_EXECUTE",
+    "key": "F5",
+    "ctrl": false,
+    "alt": false,
+    "shift": false
+  },
+  {
+    "id": 47000,
+    "cmd": "IDM_ABOUT",
+    "key": "F1",
+    "ctrl": false,
+    "alt": false,
+    "shift": false
+  }
+]

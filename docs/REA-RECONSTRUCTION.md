@@ -33,9 +33,21 @@ Supporting host `strings` on the same PE (not a REA deep provider) still confirm
 | Status Ln/Col/encoding/language | Status bar | `StatusBar` |
 | Syntax languages | langs.model.xml subset | Monaco languages |
 
+## Shortcuts & commands (v1.1)
+
+| Source | Evidence |
+| --- | --- |
+| `Parameters.cpp` `winKeyDefs[]` (upstream v8.8.1) | Default accelerator table → `src/lib/npp/shortcuts.generated.json` (101 bound keys) |
+| `menuCmdID.h` | Command IDs → `ids.generated.json` |
+| `localization/english.xml` | Labels → `labels.generated.json` |
+| Portable `plugins/` | Default plugins: **mimeTools**, **NppConverter**, **NppExport** → `src/lib/defaultPlugins.ts` |
+| PE strings / classes | `MacroShortcut`, `PluginsAdminDlg`, `ScintillaKeyMap` corroborate macro/plugin/shortcut subsystems |
+
+Settings → **Shortcut Mapper** lists the imported `winKeyDefs` map. Macro menu implements Start/Stop/Playback/Save/Multi-run against that command dispatcher.
+
 ## Deferred (later slices)
 
-Plugins host, Folder as Workspace, Document Map, Function List, Column Mode, encodings beyond UTF-8, full stylers.model.xml theme import, macros, session files.
+Folder as Workspace, Document Map, Function List, Column Mode, full stylers.model.xml import, session files, Plugins Admin network catalog.
 
 ## Re-run REA locally
 

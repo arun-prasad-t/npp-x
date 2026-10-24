@@ -1,35 +1,17 @@
-/**
- * Menu labels mirrored from Notepad++ 8.8.1 english.xml (REA shipped-artifact).
- */
-import { ENCODINGS, LANGUAGE_MENU } from "../lib/languages";
+import { LANGUAGE_MENU } from "../lib/languages";
+import { TOP_MENUS, type MenuEntry } from "../lib/npp/menus";
+import { shortcutLabelFor } from "../lib/npp/shortcuts";
 import type { PluginPackage } from "../lib/plugins";
 import { Logo } from "./Logo";
 
 type Props = {
-  onNew: () => void;
-  onOpen: () => void;
-  onSave: () => void;
-  onSaveAs: () => void;
-  onClose: () => void;
-  onCloseAll: () => void;
-  onFind: () => void;
-  onReplace: () => void;
-  onWordWrap: () => void;
-  wordWrap: boolean;
-  onUndo: () => void;
-  onRedo: () => void;
-  onCut: () => void;
-  onCopy: () => void;
-  onPaste: () => void;
-  onSelectAll: () => void;
   language: string;
   encoding: string;
-  onLanguageChange: (id: string) => void;
-  onEncodingChange: (encoding: string) => void;
-  onOpenThemeStore: () => void;
-  onOpenPluginStore: () => void;
+  onCommand: (id: number) => void;
+  onLanguageChange: (key: string) => void;
   pluginCommands: Array<{ plugin: PluginPackage; id: string; title: string }>;
   onPluginCommand: (plugin: PluginPackage, commandId: string) => void;
+  recording: boolean;
 };
 
 function Item({
@@ -54,81 +36,57 @@ function Item({
   );
 }
 
+function Entries({
+  items,
+  onCommand,
+}: {
+  items: MenuEntry[];
+  onCommand: (id: number) => void;
+}) {
+  return (
+    <>
+      {items.map((entry, i) => {
+        if (entry.kind === "sep") return <div key={`s${i}`} className="menu-sep" />;
+        if (entry.kind === "submenu") {
+          return (
+            <div key={entry.label} className="menu nested">
+              <button type="button" className="menu-item has-sub">
+                <span>{entry.label}</span>
+                <span className="sub-caret">▸</span>
+              </button>
+              <div className="menu-dropdown nested-dropdown" role="menu">
+                <Entries items={entry.items} onCommand={onCommand} />
+              </div>
+            </div>
+          );
+        }
+        return (
+          <Item
+            key={`${entry.id}-${entry.label}`}
+            label={entry.label}
+            shortcut={shortcutLabelFor(entry.id)}
+            onClick={() => onCommand(entry.id)}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 export function MenuBar(props: Props) {
   return (
     <nav className="menu-bar" aria-label="Main menu">
-      <div className="menu">
-        <button type="button" className="menu-trigger">
-          File
-        </button>
-        <div className="menu-dropdown" role="menu">
-          <Item label="New" shortcut="Ctrl+N" onClick={props.onNew} />
-          <Item label="Open..." shortcut="Ctrl+O" onClick={props.onOpen} />
-          <div className="menu-sep" />
-          <Item label="Close" shortcut="Ctrl+W" onClick={props.onClose} />
-          <Item label="Close All" onClick={props.onCloseAll} />
-          <div className="menu-sep" />
-          <Item label="Save" shortcut="Ctrl+S" onClick={props.onSave} />
-          <Item label="Save As..." shortcut="Ctrl+Alt+S" onClick={props.onSaveAs} />
-          <div className="menu-sep" />
-          <Item label="Exit" shortcut="Alt+F4" onClick={() => window.close()} />
+      {TOP_MENUS.filter((m) => m.label !== "Language").map((menu) => (
+        <div key={menu.label} className="menu">
+          <button type="button" className="menu-trigger">
+            {menu.label}
+            {menu.label === "Macro" && props.recording ? " ●" : ""}
+          </button>
+          <div className="menu-dropdown" role="menu">
+            <Entries items={menu.items} onCommand={props.onCommand} />
+          </div>
         </div>
-      </div>
-
-      <div className="menu">
-        <button type="button" className="menu-trigger">
-          Edit
-        </button>
-        <div className="menu-dropdown" role="menu">
-          <Item label="Undo" shortcut="Ctrl+Z" onClick={props.onUndo} />
-          <Item label="Redo" shortcut="Ctrl+Y" onClick={props.onRedo} />
-          <div className="menu-sep" />
-          <Item label="Cut" shortcut="Ctrl+X" onClick={props.onCut} />
-          <Item label="Copy" shortcut="Ctrl+C" onClick={props.onCopy} />
-          <Item label="Paste" shortcut="Ctrl+V" onClick={props.onPaste} />
-          <Item label="Select All" shortcut="Ctrl+A" onClick={props.onSelectAll} />
-        </div>
-      </div>
-
-      <div className="menu">
-        <button type="button" className="menu-trigger">
-          Search
-        </button>
-        <div className="menu-dropdown" role="menu">
-          <Item label="Find..." shortcut="Ctrl+F" onClick={props.onFind} />
-          <Item label="Replace..." shortcut="Ctrl+H" onClick={props.onReplace} />
-        </div>
-      </div>
-
-      <div className="menu">
-        <button type="button" className="menu-trigger">
-          View
-        </button>
-        <div className="menu-dropdown" role="menu">
-          <Item
-            label="Word wrap"
-            checked={props.wordWrap}
-            onClick={props.onWordWrap}
-          />
-          <Item label="Theme Store…" onClick={props.onOpenThemeStore} />
-        </div>
-      </div>
-
-      <div className="menu">
-        <button type="button" className="menu-trigger">
-          Encoding
-        </button>
-        <div className="menu-dropdown" role="menu">
-          {ENCODINGS.map((enc) => (
-            <Item
-              key={enc}
-              label={enc}
-              checked={props.encoding === enc}
-              onClick={() => props.onEncodingChange(enc)}
-            />
-          ))}
-        </div>
-      </div>
+      ))}
 
       <div className="menu menu-scroll">
         <button type="button" className="menu-trigger">
@@ -151,12 +109,15 @@ export function MenuBar(props: Props) {
           Plugins
         </button>
         <div className="menu-dropdown" role="menu">
-          <Item label="Plugin Store…" onClick={props.onOpenPluginStore} />
+          <Item
+            label="Plugin Store…"
+            onClick={() => props.onCommand(-1003)}
+          />
           {props.pluginCommands.length ? <div className="menu-sep" /> : null}
           {props.pluginCommands.map((cmd) => (
             <Item
               key={`${cmd.plugin.id}:${cmd.id}`}
-              label={cmd.title}
+              label={`${cmd.title}`}
               onClick={() => props.onPluginCommand(cmd.plugin, cmd.id)}
             />
           ))}
