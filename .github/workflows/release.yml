@@ -1,5 +1,11 @@
 # Build and publish npp-x installers for major desktop targets.
 # Triggers: tag v*  OR  Actions → Release → Run workflow
+#
+# macOS signing: tauri.conf.json uses signingIdentity "-" (ad-hoc).
+# Do NOT pass empty APPLE_CERTIFICATE* env vars — Tauri treats them as
+# “use PKCS#12” and the Mac jobs fail with SecKeychainItemImport errors.
+# When you have a real Apple Developer cert, set the secrets and add those
+# env vars back to the build step (non-empty values only).
 
 name: Release
 
@@ -72,37 +78,10 @@ jobs:
       - name: Install frontend deps
         run: npm ci
 
-      # Optional Apple Developer ID (repo secrets). Without them → ad-hoc sign; see docs/MACOS-OPEN.md.
-      - name: Import Apple certificate
-        if: matrix.platform == 'macos-latest'
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: |
-          if [ -z "${APPLE_CERTIFICATE:-}" ]; then
-            echo "No APPLE_CERTIFICATE secret — using ad-hoc signingIdentity '-'"
-            exit 0
-          fi
-          KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-nppx-ci-temp}"
-          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
-          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          security find-identity -v -p codesigning build.keychain
-
       - name: Build & upload release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || 'v__VERSION__' }}
           releaseName: "npp-x v__VERSION__"
