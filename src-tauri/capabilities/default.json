@@ -12,6 +12,8 @@
     "fs:allow-write-text-file",
     "updater:default",
     "process:default",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text",
     {
       "identifier": "fs:scope",
       "allow": [{ "path": "**" }]
