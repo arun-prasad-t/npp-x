@@ -89,6 +89,10 @@ npm run dev
 npm run tauri build   # local, current OS only
 ```
 
+**macOS users:** Gatekeeper may block unsigned/ad-hoc downloads — see [docs/MACOS-OPEN.md](docs/MACOS-OPEN.md) (right-click → Open, or `xattr -cr`).
+
+**App icons:** regenerate from the brand mark with `npx tauri icon branding/app-icon.png`.
+
 ---
 
 ## Brand in one line

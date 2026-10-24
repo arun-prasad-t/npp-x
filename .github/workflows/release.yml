@@ -1,9 +1,5 @@
 # Build and publish npp-x installers for major desktop targets.
-# Local cross-builds from one OS are not practical for Tauri; CI runners do this.
-#
 # Triggers: tag v*  OR  Actions → Release → Run workflow
-# Private-repo note: GitHub’s free ubuntu-*-arm runners are public-repo only,
-# so Linux here is x64. macOS ships both Apple Silicon and Intel.
 
 name: Release
 
@@ -14,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag (e.g. v0.1.0). Leave empty to use package version."
+        description: "Release tag (e.g. v0.1.1). Leave empty to use package version."
         required: false
         default: ""
 
@@ -76,27 +72,58 @@ jobs:
       - name: Install frontend deps
         run: npm ci
 
+      # Optional Apple Developer ID (repo secrets). Without them → ad-hoc sign; see docs/MACOS-OPEN.md.
+      - name: Import Apple certificate
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          if [ -z "${APPLE_CERTIFICATE:-}" ]; then
+            echo "No APPLE_CERTIFICATE secret — using ad-hoc signingIdentity '-'"
+            exit 0
+          fi
+          KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-nppx-ci-temp}"
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          security find-identity -v -p codesigning build.keychain
+
       - name: Build & upload release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || 'v__VERSION__' }}
           releaseName: "npp-x v__VERSION__"
           releaseBody: |
             Cross-platform Notepad++-inspired editor (Tauri 2 + React + Monaco).
 
-            ### Downloads
-            Pick the asset for your OS/CPU. macOS builds are ad-hoc signed (unsigned Apple ID) — right-click → Open the first time if Gatekeeper warns.
+            ### macOS Gatekeeper
+            Free CI builds are **ad-hoc signed** (not Apple-notarized). If macOS says it cannot verify the app:
 
+            1. **Right-click** `npp-x.app` → **Open** → **Open**, or
+            2. Run: `xattr -cr /Applications/npp-x.app && open /Applications/npp-x.app`
+
+            Full guide: [docs/MACOS-OPEN.md](https://github.com/arun-prasad-t/npp-x/blob/main/docs/MACOS-OPEN.md)
+
+            ### Downloads
             | Platform | Typical asset |
             |----------|----------------|
-            | macOS Apple Silicon | `.dmg` / `.app.tar.gz` (`aarch64`) |
-            | macOS Intel | `.dmg` / `.app.tar.gz` (`x64`) |
+            | macOS Apple Silicon | `.dmg` / `.app` (`aarch64`) |
+            | macOS Intel | `.dmg` / `.app` (`x64`) |
             | Windows x64 | `.msi` / `.exe` |
             | Linux x64 | `.AppImage` / `.deb` |
-
-            Linux ARM and Windows ARM need a public repo (or paid runners) — not included in this private-repo matrix.
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
