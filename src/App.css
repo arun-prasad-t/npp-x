@@ -124,6 +124,43 @@ select,
   background: var(--npp-chrome);
 }
 
+.browser-session-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  background: color-mix(in srgb, var(--npp-accent) 14%, var(--npp-chrome-2));
+  border-bottom: 1px solid var(--npp-border);
+  color: var(--npp-text);
+}
+
+.browser-session-banner p {
+  margin: 0;
+  flex: 1;
+}
+
+.browser-session-banner code {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11.5px;
+}
+
+.browser-session-banner button {
+  appearance: none;
+  flex-shrink: 0;
+  border: 1px solid var(--npp-border);
+  background: var(--npp-tab-active);
+  color: inherit;
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  min-height: 32px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .menu-bar {
   display: flex;
   align-items: center;
