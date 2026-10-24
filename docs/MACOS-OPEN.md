@@ -27,4 +27,10 @@ Or download and double-click [`scripts/macos-open-npp-x.command`](../scripts/mac
 
 ## Notarized builds (silent open)
 
-When `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_PASSWORD` / app-specific password, and `APPLE_TEAM_ID` secrets are set on the repo, the Release workflow can sign + notarize. Until then, use Option A/B above.
+Needs a paid [Apple Developer](https://developer.apple.com/) account. After you have a Developer ID Application certificate:
+
+1. Export a `.p12`, base64-encode it, store as repo secrets (`APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, plus Apple ID / team for notarization).
+2. Wire those **non-empty** env vars into `.github/workflows/release.yml` (empty `APPLE_CERTIFICATE=` makes Tauri try PKCS#12 import and **fail** the Mac jobs).
+3. You can then remove or override `bundle.macOS.signingIdentity: "-"` in `tauri.conf.json`.
+
+Until then, use Option A/B above.
