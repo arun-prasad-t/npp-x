@@ -69,7 +69,7 @@ export default function App() {
   const [marketTab, setMarketTab] = useState<"themes" | "plugins">("themes");
   const [shortcutOpen, setShortcutOpen] = useState(false);
   const [activeThemeId, setActiveThemeId] = useState(
-    () => localStorage.getItem(THEME_KEY) ?? "npp-classic",
+    () => localStorage.getItem(THEME_KEY) ?? "npp-2026",
   );
   const [enabledPluginIds, setEnabledPluginIds] = useState(loadEnabledPlugins);
   const [catalogTick, setCatalogTick] = useState(0);
