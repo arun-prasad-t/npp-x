@@ -55,13 +55,33 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 
 ---
 
+## Highlights (why people stick around)
+
+| Feature | Why it matters |
+| --- | --- |
+| **Session restore** | Open 100 files, edit freely, **don’t hit Save** — quit and come back: every tab and unsaved buffer is still there (classic N++ muscle memory). |
+| **JSON / XML tools** | Tools → Pretty-print or Minify — built-in, no plugin hunt. Same in desktop **and** browser. |
+| **Diff check** | View → Compare Tabs or Compare with Clipboard — side-by-side Monaco diff. |
+| **Theme & Plugin stores** | Install from **file or git URL** in one click. |
+| **Cross-platform** | Linux · macOS · Windows from one codebase; browser demo host for quick tryouts. |
+| **2026 chrome** | Dense slate IDE UI, Plus Jakarta Sans, run-green accent, accessible focus. |
+
+### Session restore & browser storage
+
+Session restore is **on by default** (Settings → *Remember session for next launch*).
+
+- **Desktop (Tauri):** session survives app quit/relaunch.  
+- **Browser host:** the same feature uses this browser’s **`localStorage` + IndexedDB**. That is how tabs come back after refresh — and **large unsaved buffers can use noticeable storage/memory** in the profile. A one-time banner explains this in the web UI; turn restore off anytime from Settings if you prefer a clean slate.
+
+---
+
 ## What’s in v0.1
 
 - Multi-tab documents · New / Open / Save / Save As / Close  
 - Find & Replace · Encoding & Language menus · status bar (Ln / Col / Sel / encoding / language)  
-- **JSON / XML pretty-print & minify** (Tools menu) — works in desktop and browser host  
+- **JSON / XML pretty-print & minify** (Tools menu) — desktop + browser  
 - **Diff check** — View → Compare Tabs / Compare with Clipboard  
-- **Session restore** — unsaved tabs survive quit/relaunch (like N++)  
+- **Session restore** — unsaved tabs survive quit/relaunch (like N++), including browser via localStorage/IndexedDB  
 - N++-shaped menus, shortcuts, macros & tools surface (reconstructed)  
 - Built-in themes including **npp-x 2026** · Theme Store + Plugin Store  
 - Default plugins parity targets: mimeTools / NppConverter / NppExport style contributions  
@@ -100,7 +120,7 @@ npm run tauri build   # local, current OS only
 
 Full guide: [docs/MACOS-OPEN.md](docs/MACOS-OPEN.md). (Apple notarization = paid Developer account — later.)
 
-**Session restore (N++ classic):** Open many files, edit without saving, quit — relaunch and **everything comes back** (tabs + unsaved buffers). Toggle: Settings → Remember session for next launch. Works in desktop and browser host.
+**Session restore (N++ classic):** Open many files, edit without saving, quit — relaunch and **everything comes back**. Same in the **browser** (saved to `localStorage` / IndexedDB — can use disk space with huge sessions). Toggle: Settings → Remember session for next launch.
 
 **App icons:** regenerate from the brand mark with `npx tauri icon branding/app-icon.png`.
 

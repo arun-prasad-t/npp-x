@@ -9,6 +9,7 @@ import { FindBar } from "./components/FindBar";
 import { MarketplacePanel } from "./components/MarketplacePanel";
 import { ShortcutMapper } from "./components/ShortcutMapper";
 import { DiffPane } from "./components/DiffPane";
+import { BrowserSessionBanner } from "./components/BrowserSessionBanner";
 import { formatJson, formatXml } from "./lib/formatters";
 import {
   createFromFile,
@@ -647,6 +648,7 @@ export default function App() {
 
   return (
     <div className="npp-shell">
+      <BrowserSessionBanner visible={!isTauri()} />
       <MenuBar
         language={active?.language ?? "normal"}
         encoding={active?.encoding ?? "UTF-8"}
