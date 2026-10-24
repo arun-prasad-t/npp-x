@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest an improvement for npp-x
+title: "[feat] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What pain does this solve? N++ parity? New platform need?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: I looked for an existing issue / discussion
+        - label: This does not require shipping private REA dumps or secrets

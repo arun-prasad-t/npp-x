@@ -105,12 +105,18 @@ npm run tauri build   # local, current OS only
 
 | Doc | Why |
 | --- | --- |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Ship a theme or plugin |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | PRs, themes & plugins |
+| [SECURITY.md](SECURITY.md) | Vulnerability reporting |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
 | [docs/REA-RECONSTRUCTION.md](docs/REA-RECONSTRUCTION.md) | How N++ 8.8.1 informed the UI |
 | [design-system/npp-x/MASTER.md](design-system/npp-x/MASTER.md) | UI tokens (ui-ux-pro-max) |
+
+**CODEOWNER:** [@arun-prasad-t](https://github.com/arun-prasad-t)
 
 ---
 
 ## License & trademark
+
+Licensed under the [MIT License](LICENSE).
 
 Notepad++ is a trademark of its respective owners. npp-x is an independent project.
