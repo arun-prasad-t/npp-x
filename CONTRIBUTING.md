@@ -77,14 +77,20 @@ See `community/examples/theme.obsidian-ink.json`.
 | `insertText(text)` | Insert at cursor (best-effort) |
 | `openPreview({ title, html })` | Sandboxed HTML preview pane (CSS ok, scripts blocked) |
 | `closePreview()` | Dismiss preview |
+| `openBottomDock({ id, title, html, height?, allowScripts? })` | Companion panel under the editor |
+| `updateBottomDock(id, patch)` | Update dock HTML / title / height |
+| `closeBottomDock(id?)` | Close one dock, or all if `id` omitted |
+| `onTyping(handler)` | `{ cps, delta, idleMs }` on each edit; returns unsubscribe |
 | `registerCommand(id, fn)` | Bind a contributed command |
 
-Plugins run in a restricted `Function` sandbox with only the `nppx` argument. Treat third-party plugins like any untrusted code you choose to enable.
+Plugins run in a restricted `Function` sandbox with only the `nppx` argument. Treat third-party plugins like any untrusted code you choose to enable. Set `allowScripts: true` only when required (e.g. YouTube embed).
 
-**Optional preview examples** (Plugin Store → enable, then Tools menu):
+**Optional examples** (Plugin Store → enable, then Tools menu):
 
 - `community/examples/plugin.html-preview.json` — HTML design preview
 - `community/examples/plugin.csv-table.json` — CSV / TSV table render
+- `community/examples/plugin.youtube-dock.json` — YouTube while typing
+- `community/examples/plugin.type-runner.json` — typing-speed “road runner” buddy
 - `community/examples/plugin.trim-trailing.json` — trim trailing spaces
 
 Bundled community plugins stay **off by default** so users opt in.

@@ -1,0 +1,27 @@
+{
+  "schema": "npp-x.plugin/1",
+  "id": "community.youtube-dock",
+  "name": "YouTube While Typing",
+  "author": "community",
+  "version": "1.0.0",
+  "description": "Fun optional dock: paste a YouTube URL and keep a mini player under the editor while you work.",
+  "contributes": {
+    "commands": [
+      {
+        "id": "community.yt.open",
+        "title": "YouTube: Play in bottom dock…"
+      },
+      {
+        "id": "community.yt.close",
+        "title": "YouTube: Close dock"
+      }
+    ],
+    "menus": {
+      "tools": [
+        "community.yt.open",
+        "community.yt.close"
+      ]
+    }
+  },
+  "code": "\nfunction extractId(input) {\n  const s = (input || \"\").trim();\n  if (!s) return null;\n  if (/^[\\w-]{11}$/.test(s)) return s;\n  try {\n    const u = new URL(s);\n    if (u.hostname.includes(\"youtu.be\")) {\n      const id = u.pathname.split(\"/\").filter(Boolean)[0];\n      return id && id.length === 11 ? id : null;\n    }\n    const v = u.searchParams.get(\"v\");\n    if (v && /^[\\w-]{11}$/.test(v)) return v;\n    const m = u.pathname.match(/\\/(embed|shorts)\\/([\\w-]{11})/);\n    if (m) return m[2];\n  } catch (e) {}\n  const loose = s.match(/(?:v=|youtu\\.be\\/|embed\\/|shorts\\/)([\\w-]{11})/);\n  return loose ? loose[1] : null;\n}\nnppx.registerCommand(\"community.yt.open\", () => {\n  const raw = window.prompt(\"YouTube URL or video id:\", \"https://www.youtube.com/watch?v=\");\n  if (raw == null) return;\n  const id = extractId(raw);\n  if (!id) {\n    nppx.notify(\"Could not parse a YouTube video id\");\n    return;\n  }\n  const html = \"<!DOCTYPE html><html><head><meta charset=\\\"utf-8\\\"><style>\"\n    + \"html,body{margin:0;height:100%;background:#0f172a;overflow:hidden}\"\n    + \"iframe{border:0;width:100%;height:100%}\"\n    + \"</style></head><body>\"\n    + \"<iframe src=\\\"https://www.youtube.com/embed/\" + id + \"?rel=0\\\" title=\\\"YouTube\\\" \"\n    + \"allow=\\\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\\\" \"\n    + \"allowfullscreen></iframe>\"\n    + \"</body></html>\";\n  nppx.openBottomDock({\n    id: \"community.yt\",\n    title: \"YouTube — \" + id,\n    html: html,\n    height: 220,\n    allowScripts: true,\n  });\n  nppx.notify(\"YouTube dock open — type away\");\n});\nnppx.registerCommand(\"community.yt.close\", () => {\n  nppx.closeBottomDock(\"community.yt\");\n});\n"
+}

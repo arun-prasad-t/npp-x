@@ -10,6 +10,10 @@ import { MarketplacePanel } from "./components/MarketplacePanel";
 import { ShortcutMapper } from "./components/ShortcutMapper";
 import { DiffPane } from "./components/DiffPane";
 import { PreviewPane } from "./components/PreviewPane";
+import {
+  PluginDocks,
+  type DockPanel,
+} from "./components/PluginDocks";
 import { BrowserSessionBanner } from "./components/BrowserSessionBanner";
 import {
   BrowserWelcomeDialog,
@@ -27,11 +31,14 @@ import { listInstalledPlugins } from "./lib/marketplace";
 import {
   activatePlugin,
   EXAMPLE_PLUGIN,
+  type BottomDockPayload,
   type PluginPackage,
   type PreviewPayload,
+  type TypingEvent,
 } from "./lib/plugins";
 import { DEFAULT_PLUGINS } from "./lib/defaultPlugins";
 import { COMMUNITY_PLUGINS } from "./lib/communityPlugins";
+import { createTypingMeter } from "./lib/typingMeter";
 import {
   applyChromeTheme,
   BUILTIN_THEMES,
@@ -118,12 +125,15 @@ export default function App() {
     label: string;
   } | null>(null);
   const [preview, setPreview] = useState<PreviewPayload | null>(null);
+  const [docks, setDocks] = useState<DockPanel[]>([]);
   const [welcomeForceOpen, setWelcomeForceOpen] = useState(false);
 
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
   const commandHandlers = useRef<Map<string, () => void | Promise<void>>>(
     new Map(),
   );
+  const typingHandlers = useRef(new Set<(ev: TypingEvent) => void>());
+  const typingMeter = useRef(createTypingMeter());
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
   const tabsRef = useRef(tabs);
@@ -253,8 +263,26 @@ export default function App() {
     setMonacoThemeName(name);
   }, []);
 
+  const upsertDock = useCallback((payload: BottomDockPayload) => {
+    const panel: DockPanel = {
+      id: payload.id,
+      title: payload.title,
+      html: payload.html,
+      height: payload.height ?? 180,
+      allowScripts: !!payload.allowScripts,
+    };
+    setDocks((prev) => {
+      const i = prev.findIndex((d) => d.id === panel.id);
+      if (i < 0) return [...prev, panel];
+      const next = prev.slice();
+      next[i] = panel;
+      return next;
+    });
+  }, []);
+
   const wirePlugins = useCallback(() => {
     commandHandlers.current.clear();
+    typingHandlers.current.clear();
     for (const plugin of allPlugins) {
       if (!enabledPluginIds.includes(plugin.id)) continue;
       const api = {
@@ -295,6 +323,37 @@ export default function App() {
           setPreview(payload);
         },
         closePreview: () => setPreview(null),
+        openBottomDock: (payload: BottomDockPayload) => upsertDock(payload),
+        updateBottomDock: (
+          id: string,
+          patch: Partial<Omit<BottomDockPayload, "id">>,
+        ) => {
+          setDocks((prev) =>
+            prev.map((d) =>
+              d.id === id
+                ? {
+                    ...d,
+                    title: patch.title ?? d.title,
+                    html: patch.html ?? d.html,
+                    height: patch.height ?? d.height,
+                    allowScripts:
+                      patch.allowScripts !== undefined
+                        ? patch.allowScripts
+                        : d.allowScripts,
+                  }
+                : d,
+            ),
+          );
+        },
+        closeBottomDock: (id?: string) => {
+          setDocks((prev) => (id ? prev.filter((d) => d.id !== id) : []));
+        },
+        onTyping: (handler: (ev: TypingEvent) => void) => {
+          typingHandlers.current.add(handler);
+          return () => {
+            typingHandlers.current.delete(handler);
+          };
+        },
         registerCommand: (id: string, handler: () => void | Promise<void>) => {
           commandHandlers.current.set(id, handler);
         },
@@ -302,7 +361,7 @@ export default function App() {
       const result = activatePlugin(plugin, api);
       if (!result.ok) notify(`Plugin ${plugin.id}: ${result.error}`);
     }
-  }, [allPlugins, enabledPluginIds, notify, tabs, updateActive]);
+  }, [allPlugins, enabledPluginIds, notify, tabs, updateActive, upsertDock]);
 
   useEffect(() => {
     const theme =
@@ -858,9 +917,14 @@ export default function App() {
             language={monacoForLanguage(active?.language ?? "normal")}
             value={active?.content ?? ""}
             onMount={onMount}
-            onChange={(value) =>
-              updateActive({ content: value ?? "", dirty: true })
-            }
+            onChange={(value) => {
+              const text = value ?? "";
+              updateActive({ content: text, dirty: true });
+              if (typingHandlers.current.size) {
+                const ev = typingMeter.current.note(text.length);
+                for (const h of typingHandlers.current) h(ev);
+              }
+            }}
             options={{
               fontFamily:
                 "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
@@ -879,6 +943,11 @@ export default function App() {
           />
         )}
       </div>
+
+      <PluginDocks
+        docks={docks}
+        onClose={(id) => setDocks((prev) => prev.filter((d) => d.id !== id))}
+      />
 
       <StatusBar
         line={cursor.line}
