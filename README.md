@@ -128,7 +128,7 @@ Full voice, messaging pillars, and logo rules: [docs/brand-guidelines.md](docs/b
 
 **Live site:** [https://npp-x.npp-x.workers.dev/](https://npp-x.npp-x.workers.dev/) — menus, Monaco, HTML/CSV/Markdown preview, Diff tabs, Find & Replace, PDF export via print, and session restore (no native FS / Open-with in the browser).
 
-First visit opens an **Online mode** branding dialog with Download + Continue in browser. Reopen anytime: Help → Download desktop…
+Every visit opens an **Online mode** dialog with Download + Continue in browser. Also: Help → Download desktop…
 
 ## Getting started
 
