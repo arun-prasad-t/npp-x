@@ -1,19 +1,21 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Logo } from "./Logo";
 
-/** Bumped so existing dismisses from earlier builds still get one welcome. */
-const DISMISS_KEY = "nppx.browserWelcome.v2";
 export const RELEASES_URL =
   "https://github.com/arun-prasad-t/npp-x/releases/latest";
 
 type Props = {
-  /** First-visit auto-open when true and not dismissed. */
+  /** Show on every browser page load (desktop builds pass false). */
   autoOpen: boolean;
   /** Force open from Help → Download desktop… */
   forceOpen?: boolean;
   onClose: () => void;
 };
 
+/**
+ * Download nudge for the online demo — opens on every visit.
+ * Closing only hides it for this page load; next refresh shows it again.
+ */
 export function BrowserWelcomeDialog({
   autoOpen,
   forceOpen = false,
@@ -21,15 +23,22 @@ export function BrowserWelcomeDialog({
 }: Props) {
   const titleId = useId();
   const primaryRef = useRef<HTMLAnchorElement>(null);
-  const [dismissed, setDismissed] = useState(
-    () => localStorage.getItem(DISMISS_KEY) === "1",
-  );
+  const [closed, setClosed] = useState(false);
 
-  const open = forceOpen || (autoOpen && !dismissed);
+  // Drop any older “don’t show again” flag so returning visitors see the CTA.
+  useEffect(() => {
+    try {
+      localStorage.removeItem("nppx.browserWelcome.v2");
+      localStorage.removeItem("nppx.browserWelcome.v1");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const open = forceOpen || (autoOpen && !closed);
 
   const dismiss = () => {
-    localStorage.setItem(DISMISS_KEY, "1");
-    setDismissed(true);
+    setClosed(true);
     onClose();
   };
 
@@ -39,8 +48,7 @@ export function BrowserWelcomeDialog({
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       e.preventDefault();
-      localStorage.setItem(DISMISS_KEY, "1");
-      setDismissed(true);
+      setClosed(true);
       onClose();
     };
     window.addEventListener("keydown", onKey, true);
