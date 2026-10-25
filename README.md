@@ -113,8 +113,13 @@ The Vite UI runs as a **browser demo** (no native FS) — good for trying menus,
 **Host on Cloudflare Pages (free):**
 
 1. [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Workers & Pages** → Create → Connect this GitHub repo  
-2. Build command: `npm run build` · Output directory: `dist` · Node.js: `20`  
-3. Or locally: `npm run build && npx wrangler pages deploy dist` (`wrangler.toml` is already in the repo)
+2. Settings → Builds (new Workers & Pages UI has **no** “Build output directory” field — that comes from `wrangler.toml`):
+   - **Root directory:** empty
+   - **Build command:** `npm run build`
+   - **Deploy command:** empty (do **not** use `wrangler deploy`)
+   - Output dir is already set in-repo: `pages_build_output_dir = "./dist"`
+3. Or CLI: `npm run build && npx wrangler pages deploy dist`
+4. If the API token banner says unavailable, recreate the project build token under Settings → Builds → API token
 
 First visit opens an **Online mode** branding dialog with Download + Continue in browser. Reopen anytime: Help → Download desktop…
 
