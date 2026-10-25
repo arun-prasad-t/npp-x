@@ -118,8 +118,11 @@ pub fn run() {
                     .filter_map(|u| u.to_file_path().ok())
                     .map(|p| p.to_string_lossy().into_owned())
                     .collect::<Vec<_>>();
-                push_files(app, paths);
+                push_files(&app, paths);
             }
-            let _ = (app, event);
+            #[cfg(not(target_os = "macos"))]
+            {
+                let _ = (app, event);
+            }
         });
 }
