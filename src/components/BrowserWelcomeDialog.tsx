@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Logo } from "./Logo";
 
-const DISMISS_KEY = "nppx.browserWelcome.dismissed";
+/** Bumped so existing dismisses from earlier builds still get one welcome. */
+const DISMISS_KEY = "nppx.browserWelcome.v2";
 export const RELEASES_URL =
   "https://github.com/arun-prasad-t/npp-x/releases/latest";
 

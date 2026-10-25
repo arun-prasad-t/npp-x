@@ -1,7 +1,7 @@
 import type { IRange, editor as MonacoEditor } from "monaco-editor";
 import { isTauri } from "./tauri";
 
-async function writeText(text: string): Promise<void> {
+export async function writeClipboardText(text: string): Promise<void> {
   if (isTauri()) {
     const { writeText: write } = await import(
       "@tauri-apps/plugin-clipboard-manager"
@@ -69,7 +69,7 @@ export async function editorCopy(
   if (!ed) return false;
   const { text } = textForClipboard(ed);
   if (!text) return false;
-  await writeText(text);
+  await writeClipboardText(text);
   return true;
 }
 
@@ -79,7 +79,7 @@ export async function editorCut(
   if (!ed) return false;
   const { text, range } = textForClipboard(ed);
   if (!text || !range) return false;
-  await writeText(text);
+  await writeClipboardText(text);
   ed.executeEdits("cut", [{ range, text: "", forceMoveMarkers: true }]);
   ed.focus();
   return true;

@@ -49,6 +49,10 @@ Settings → **Shortcut Mapper** lists the imported `winKeyDefs` map. Macro menu
 
 Folder as Workspace, Document Map, Function List, Column Mode, full stylers.model.xml import, session files, Plugins Admin network catalog.
 
+## Find / Replace dialog (REA evidence)
+
+`inspect_pe_resources` on `notepad++.exe` (8.8.1) → `RT_DIALOG` id **1600** (Find/Replace). Parsed `DLGTEMPLATEEX` controls give the layout and ids reproduced in `FindDialog.tsx`: Find / Replace / Mark tabs; Backward direction (1722), Match whole word only (1603), Match case (1604), Wrap around (1606), In selection (1632); Search Mode Normal (1625) / Extended (1626) / Regular expression (1605) + ". matches newline" (1703); Find Next, Count (1614), Find All in Current / All Opened Documents (1641 / 1636), Replace, Replace All, Replace All in All Opened Documents (1635), Mark All (1615), Clear all marks (1633), Copy Marked Text (1725). Semantics are re-implemented in `src/lib/findEngine.ts` / `findActions.ts`; Find in Files / Projects is not yet implemented.
+
 ## Re-run REA locally
 
 Keep artifacts **outside** the repo (create-tauri-app `--force` wipes the tree):

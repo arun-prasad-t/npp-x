@@ -1,5 +1,12 @@
 import { languageFromFilename } from "./languages";
 
+export type DiffView = {
+  type: "diff";
+  original: string;
+  modified: string;
+  language: string;
+};
+
 export type DocumentTab = {
   id: string;
   name: string;
@@ -8,6 +15,8 @@ export type DocumentTab = {
   language: string;
   dirty: boolean;
   encoding: string;
+  /** Virtual side-by-side diff tab (not persisted in session). */
+  view?: DiffView;
 };
 
 let counter = 1;
@@ -49,4 +58,27 @@ export function createFromFile(
     dirty: false,
     encoding: "UTF-8",
   };
+}
+
+/** Open a compare result as its own tab (switching files leaves it alone). */
+export function createDiffTab(
+  label: string,
+  original: string,
+  modified: string,
+  language: string,
+): DocumentTab {
+  return {
+    id: crypto.randomUUID(),
+    name: label,
+    path: null,
+    content: "",
+    language: "diff",
+    dirty: false,
+    encoding: "UTF-8",
+    view: { type: "diff", original, modified, language },
+  };
+}
+
+export function isDiffTab(tab: DocumentTab | undefined | null): boolean {
+  return tab?.view?.type === "diff";
 }

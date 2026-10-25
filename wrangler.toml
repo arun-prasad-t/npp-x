@@ -1,5 +1,7 @@
-# Cloudflare Pages — connect the GitHub repo in the dashboard, or:
-#   npm run build && npx wrangler pages deploy dist
+# Cloudflare Pages — build output dir lives HERE (new dashboard has no "Build output directory" field).
+# Dashboard: Build command = npm run build · Deploy command empty · Root directory empty
+# CLI: npm run build && npx wrangler pages deploy dist
+# Do not use `wrangler deploy` — that is for Workers, not Pages.
 name = "npp-x"
 compatibility_date = "2026-10-25"
-pages_build_output_dir = "dist"
+pages_build_output_dir = "./dist"

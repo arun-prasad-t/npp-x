@@ -2340,7 +2340,7 @@ dependencies = [
 
 [[package]]
 name = "npp-x"
-version = "0.1.3"
+version = "0.1.6"
 dependencies = [
  "serde",
  "serde_json",

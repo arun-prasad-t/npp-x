@@ -1,5 +1,5 @@
 export type TypingEvent = {
-  /** Estimated characters per second over a short window. */
+  /** Estimated characters per second over the last ~1s (inserts + deletes). */
   cps: number;
   /** Net character delta since last event (can be negative on delete). */
   delta: number;
@@ -7,23 +7,23 @@ export type TypingEvent = {
   idleMs: number;
 };
 
-type Sample = { t: number; len: number };
+type Sample = { t: number; n: number };
 
-/**
- * Sliding-window typing speed for plugin companions (Type Runner, etc.).
- */
+const WINDOW_MS = 1000;
+/** Cap pastes / format-all so the buddy doesn't explode. */
+const MAX_BURST = 6;
+
+/** Sliding-window typing speed for plugin companions. */
 export function createTypingMeter() {
   let lastLen = 0;
   let lastT = 0;
-  const window: Sample[] = [];
-  const WINDOW_MS = 1200;
+  const samples: Sample[] = [];
 
   return {
     reset(len: number) {
       lastLen = len;
       lastT = performance.now();
-      window.length = 0;
-      window.push({ t: lastT, len });
+      samples.length = 0;
     },
     note(len: number): TypingEvent {
       const now = performance.now();
@@ -31,13 +31,9 @@ export function createTypingMeter() {
       const delta = len - lastLen;
       lastLen = len;
       lastT = now;
-      window.push({ t: now, len });
-      while (window.length > 1 && now - window[0].t > WINDOW_MS) {
-        window.shift();
-      }
-      const first = window[0];
-      const dt = Math.max(1, now - first.t);
-      const cps = Math.max(0, ((len - first.len) / dt) * 1000);
+      samples.push({ t: now, n: Math.min(Math.abs(delta), MAX_BURST) });
+      while (samples.length && now - samples[0].t > WINDOW_MS) samples.shift();
+      const cps = samples.reduce((sum, s) => sum + s.n, 0);
       return { cps, delta, idleMs };
     },
   };

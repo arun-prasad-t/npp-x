@@ -19,9 +19,15 @@
 </p>
 
 <p align="center">
+  <a href="https://npp-x.pages.dev"><strong>Try live → npp-x.pages.dev</strong></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/arun-prasad-t/npp-x/releases">Download</a>
   ·
-  <a href="#try-online">Try online</a>
+  <a href="https://npp-x.pages.dev">Live demo</a>
+  ·
+  <a href="#try-online">Host it yourself</a>
   ·
   <a href="#the-wait-is-over">The story</a>
   ·
@@ -78,11 +84,28 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 | Feature | Why it matters |
 | --- | --- |
 | **Session restore** | Open 100 files, edit freely, **don’t hit Save** — quit and come back: every tab and unsaved buffer is still there. |
-| **JSON / XML tools** | Tools → Pretty-print or Minify — built-in, desktop **and** browser. |
-| **Diff check** | View → Compare Tabs or Compare with Clipboard — side-by-side Monaco. |
+| **Per-tab undo** | Each document keeps its own undo stack — like N++, not one global history. |
+| **Find & Replace** | N++-grade: Normal / Extended / Regex, Count, Find All, Mark, Replace All in open docs. |
+| **Diff tabs** | Top **Diff** menu → Compare Tabs or Clipboard — opens a real tab, not a stuck overlay. |
+| **HTML / CSV / Markdown preview** | On by default. **Split** with the editor first; **Full** when you want. Mermaid in Markdown. |
+| **Export PDF** | From any preview (HTML, CSV table, MD + diagrams) — print dialog → Save as PDF. No extra apps. |
+| **Quick preview** | Paste HTML / MD / CSV into a buffer → one-click **Open preview** chip. |
+| **Open with npp-x** | Desktop registers `.txt` `.csv` `.html` `.md` — make it your default opener in the OS. |
 | **Theme & Plugin stores** | Install from **file or git URL** in one click. |
-| **Auto-update** | Desktop checks GitHub Releases (`latest.json`); Help → Check for Updates. |
-| **2026 chrome** | Dense slate IDE UI, Plus Jakarta Sans, run-green accent, accessible focus. |
+| **Auto-update + notes** | Help → Check for Updates shows the full release notes; About ships the brand story. |
+| **Optional fun plugins** | YouTube corner PiP + Type Runner buddy (draggable; off by default). |
+| **2026 chrome** | Dense slate IDE UI, Plus Jakarta Sans, run-green accent, click-stable menus. |
+
+### What’s new in 0.1.6
+
+- Find / Replace / Mark dialog (REA-backed from N++ 8.8.1)
+- Markdown preview with Mermaid; split/full layout for all previews
+- Export Preview as PDF; file associations for text / CSV / HTML / Markdown
+- Diff as a top-level menu + dedicated tab
+- YouTube PiP no longer steals shortcuts; companions are freely movable
+- Stronger About + update dialog with release notes
+
+Full notes: [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md).
 
 > [!TIP]
 > Session restore is **on by default**. Desktop survives quit/relaunch; the browser host uses `localStorage` + IndexedDB (large unsaved buffers can use noticeable storage). Toggle anytime: Settings → *Remember session for next launch*.
@@ -108,17 +131,22 @@ Full voice, messaging pillars, and logo rules: [docs/brand-guidelines.md](docs/b
 
 ## Try online
 
-The Vite UI runs as a **browser demo** (no native FS) — good for trying menus, Monaco, JSON/XML tools, and session restore before you install.
+**Live site:** [https://npp-x.pages.dev](https://npp-x.pages.dev) — menus, Monaco, HTML/CSV/Markdown preview, Diff tabs, Find & Replace, PDF export via print, and session restore (no native FS / Open-with in the browser).
 
-**Host on Cloudflare Pages (free):**
+**Host your own copy on Cloudflare Pages (free):**
 
 1. [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Workers & Pages** → Create → Connect this GitHub repo  
-2. Build command: `npm run build` · Output directory: `dist` · Node.js: `20`  
-3. Or locally: `npm run build && npx wrangler pages deploy dist` (`wrangler.toml` is already in the repo)
+2. Settings → Builds (new Workers & Pages UI has **no** “Build output directory” field — that comes from `wrangler.toml`):
+   - **Root directory:** empty
+   - **Build command:** `npm run build`
+   - **Deploy command:** empty (do **not** use `wrangler deploy`)
+   - Output dir is already set in-repo: `pages_build_output_dir = "./dist"`
+3. Or CLI: `npm run build && npx wrangler pages deploy dist`
+4. If the API token banner says unavailable, recreate the project build token under Settings → Builds → API token
 
 First visit opens an **Online mode** branding dialog with Download + Continue in browser. Reopen anytime: Help → Download desktop…
 
-> After the first deploy, paste the `*.pages.dev` URL into the nav link above (and optionally a custom domain).
+> Official deploy for this repo: [`npp-x.pages.dev`](https://npp-x.pages.dev). Point a custom domain in Cloudflare if you want.
 
 ## Getting started
 
@@ -197,7 +225,10 @@ Cross-platform packaging and a modern editor core without fighting Scintilla on 
 Yes — via `localStorage` / IndexedDB. Turn it off in Settings if you want a clean slate.
 
 **How do updates work?**  
-Desktop builds check Releases after launch (and Help → Check for Updates). Browser host opens the Releases page instead.
+Desktop builds check Releases after launch. **Help → Check for Updates** always shows the latest release notes (and offers install when you’re behind). Browser host shows the same notes and links to Downloads.
+
+**Can I open `.md` / `.csv` / `.html` by double-click?**  
+Yes on desktop installs — set npp-x as the default app (Help → *File types & default app…*). Then use the preview chip or Plugins menu; Export PDF from the preview toolbar.
 
 Still stuck? Check [troubleshooting](#troubleshooting) or [open an issue](https://github.com/arun-prasad-t/npp-x/issues).
 

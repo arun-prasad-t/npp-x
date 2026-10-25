@@ -75,25 +75,30 @@ See `community/examples/theme.obsidian-ink.json`.
 | `getActiveLanguage()` | Language key (e.g. `html`, `csv`) |
 | `setActiveText(text)` | Replace active document |
 | `insertText(text)` | Insert at cursor (best-effort) |
-| `openPreview({ title, html })` | Sandboxed HTML preview pane (CSS ok, scripts blocked) |
+| `openPreview({ title, html, allowScripts?, mode? })` | Preview pane (default **split** with editor; `mode: "markdown"` builds Mermaid-ready HTML) |
 | `closePreview()` | Dismiss preview |
-| `openBottomDock({ id, title, html, height?, allowScripts? })` | Companion panel under the editor |
+| `openBottomDock({ id, title, html, height?, allowScripts? })` | Panel under the editor (e.g. YouTube) |
 | `updateBottomDock(id, patch)` | Update dock HTML / title / height |
 | `closeBottomDock(id?)` | Close one dock, or all if `id` omitted |
-| `onTyping(handler)` | `{ cps, delta, idleMs }` on each edit; returns unsubscribe |
+| `openCompanion({ id, html, speech?, state?, width?, height?, allowMedia? })` | Corner buddy / PiP (`allowMedia` for YouTube embeds; default ~150×100) |
+| `updateCompanion(id, { html?, speech?, state?, width?, height?, allowMedia? })` | `state` → `postMessage({ type: "nppx:companion", state })` — animate without reloading |
+| `closeCompanion(id?)` | Dismiss buddy |
+| `onTyping(handler)` | `{ cps, delta, idleMs }` on each edit; one handler per plugin; returns unsubscribe |
 | `registerCommand(id, fn)` | Bind a contributed command |
 
 Plugins run in a restricted `Function` sandbox with only the `nppx` argument. Treat third-party plugins like any untrusted code you choose to enable. Set `allowScripts: true` only when required (e.g. YouTube embed).
 
-**Optional examples** (Plugin Store → enable, then Tools menu):
+**Shipped enabled by default** (also under `community/examples/` for install-from-file demos):
 
-- `community/examples/plugin.html-preview.json` — HTML design preview
-- `community/examples/plugin.csv-table.json` — CSV / TSV table render
-- `community/examples/plugin.youtube-dock.json` — YouTube while typing
-- `community/examples/plugin.type-runner.json` — typing-speed “road runner” buddy
-- `community/examples/plugin.trim-trailing.json` — trim trailing spaces
+- `plugin.html-preview.json` — HTML design preview (split / full)
+- `plugin.csv-table.json` — CSV / TSV table render (split / full)
+- `plugin.md-preview.json` — Markdown + Mermaid diagrams (sequence, flow, …)
 
-Bundled community plugins stay **off by default** so users opt in.
+**Optional fun plugins** (Plugin Store → enable; off by default):
+
+- `plugin.youtube-dock.json` — corner YouTube PiP
+- `plugin.type-runner.json` — typing-speed buddy
+- `plugin.trim-trailing.json` — trim trailing spaces
 
 ## Git repo layout (recommended)
 
