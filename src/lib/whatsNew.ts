@@ -10,7 +10,7 @@ export const WHATS_NEW = `## npp-x ${APP_VERSION}
 - **Export PDF on desktop** — no more “pop-ups blocked”; print dialog opens reliably
 
 ### Site
-- SEO for Markdown preview, MD/HTML/CSV → PDF, Diff check — live at https://npp-x.pages.dev
+- SEO for Markdown preview, MD/HTML/CSV → PDF, Diff check — live at https://npp-x.npp-x.workers.dev
 
 ### Still with you
 - **Find & Replace** (Normal / Extended / Regex) · **Diff** tabs · **HTML / CSV / Markdown+Mermaid** split preview

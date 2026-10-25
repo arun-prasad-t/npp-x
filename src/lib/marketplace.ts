@@ -102,15 +102,24 @@ async function fetchJson(url: string): Promise<unknown> {
 }
 
 export async function installFromGitUrl(url: string): Promise<InstallResult> {
-  const candidates = [resolvePackageUrl(url)];
+  const trimmed = url.trim();
+  // Same-origin / relative paths (live site ships /community/examples/*.json)
+  const resolved =
+    trimmed.startsWith("/") || trimmed.startsWith("./")
+      ? new URL(trimmed, window.location.origin).href
+      : resolvePackageUrl(trimmed);
+
+  const candidates = [resolved];
   // Fallbacks when repo root package name differs
-  if (url.includes("github.com") && !url.endsWith(".json")) {
+  if (trimmed.includes("github.com") && !trimmed.endsWith(".json")) {
     const base = candidates[0].replace(/\/[^/]+$/, "");
     candidates.push(
       `${base}/theme.json`,
       `${base}/plugin.json`,
       `${base}/nppx.theme.json`,
       `${base}/nppx.plugin.json`,
+      `${base}/community/examples/nppx.package.json`,
+      `${base}/community/examples/plugin.trim-trailing.json`,
     );
   }
 

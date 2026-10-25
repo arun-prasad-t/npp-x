@@ -1,7 +1,6 @@
-# Cloudflare Pages — build output dir lives HERE (new dashboard has no "Build output directory" field).
-# Dashboard: Build command = npm run build · Deploy command empty · Root directory empty
-# CLI: npm run build && npx wrangler pages deploy dist
-# Do not use `wrangler deploy` — that is for Workers, not Pages.
+# Cloudflare Worker static site (https://npp-x.npp-x.workers.dev)
+# Build: npm run build
+# Deploy: npx wrangler deploy
 name = "npp-x"
 compatibility_date = "2026-10-25"
 pages_build_output_dir = "./dist"

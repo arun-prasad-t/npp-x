@@ -5,7 +5,7 @@
 
 ### Site / discoverability
 - Stronger SEO metadata for Markdown preview, MD/HTML/CSV → PDF, Diff check, Find & Replace
-- `robots.txt` + `sitemap.xml` on https://npp-x.pages.dev
+- `robots.txt` + `sitemap.xml` on https://npp-x.npp-x.workers.dev
 
 ### Still in 0.1.6+
 - N++-style Find & Replace; Diff tabs; HTML / CSV / Markdown+Mermaid previews (split/full)

@@ -1,0 +1,27 @@
+{
+  "schema": "npp-x.plugin/1",
+  "id": "community.html-preview",
+  "name": "HTML Preview",
+  "author": "npp-x",
+  "version": "1.0.0",
+  "description": "Render the active buffer as HTML (sandboxed preview, CSS ok, scripts blocked). Enabled by default.",
+  "contributes": {
+    "commands": [
+      {
+        "id": "community.html.preview",
+        "title": "Preview"
+      },
+      {
+        "id": "community.html.previewClose",
+        "title": "Close Preview"
+      }
+    ],
+    "menus": {
+      "tools": [
+        "community.html.preview",
+        "community.html.previewClose"
+      ]
+    }
+  },
+  "code": "\nnppx.registerCommand(\"community.html.preview\", () => {\n  const raw = nppx.getActiveText();\n  if (!raw.trim()) {\n    nppx.notify(\"Nothing to preview\");\n    return;\n  }\n  nppx.openPreview({\n    title: \"HTML Preview — \" + (nppx.getActiveFileName() || \"untitled\"),\n    html: raw,\n  });\n});\nnppx.registerCommand(\"community.html.previewClose\", () => {\n  nppx.closePreview();\n});\n"
+}

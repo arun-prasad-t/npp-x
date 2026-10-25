@@ -211,7 +211,7 @@ select,
   cursor: pointer;
 }
 
-/* Browser / Cloudflare Pages — branded Online mode welcome */
+/* Browser / Workers demo — branded Online mode welcome */
 .welcome-overlay {
   z-index: 40;
 }
@@ -1009,7 +1009,7 @@ select,
 .market-overlay {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  z-index: 60;
   display: grid;
   place-items: center;
   padding: 24px;

@@ -19,15 +19,13 @@
 </p>
 
 <p align="center">
-  <a href="https://npp-x.pages.dev"><strong>Try live → npp-x.pages.dev</strong></a>
+  <a href="https://npp-x.npp-x.workers.dev/"><strong>Try live → npp-x.npp-x.workers.dev</strong></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/arun-prasad-t/npp-x/releases">Download</a>
   ·
-  <a href="https://npp-x.pages.dev">Live demo</a>
-  ·
-  <a href="#try-online">Host it yourself</a>
+  <a href="https://npp-x.npp-x.workers.dev/">Live demo</a>
   ·
   <a href="#the-wait-is-over">The story</a>
   ·
@@ -128,22 +126,9 @@ Full voice, messaging pillars, and logo rules: [docs/brand-guidelines.md](docs/b
 
 ## Try online
 
-**Live site:** [https://npp-x.pages.dev](https://npp-x.pages.dev) — menus, Monaco, HTML/CSV/Markdown preview, Diff tabs, Find & Replace, PDF export via print, and session restore (no native FS / Open-with in the browser).
-
-**Host your own copy on Cloudflare Pages (free):**
-
-1. [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Workers & Pages** → Create → Connect this GitHub repo  
-2. Settings → Builds (new Workers & Pages UI has **no** “Build output directory” field — that comes from `wrangler.toml`):
-   - **Root directory:** empty
-   - **Build command:** `npm run build`
-   - **Deploy command:** empty (do **not** use `wrangler deploy`)
-   - Output dir is already set in-repo: `pages_build_output_dir = "./dist"`
-3. Or CLI: `npm run build && npx wrangler pages deploy dist`
-4. If the API token banner says unavailable, recreate the project build token under Settings → Builds → API token
+**Live site:** [https://npp-x.npp-x.workers.dev/](https://npp-x.npp-x.workers.dev/) — menus, Monaco, HTML/CSV/Markdown preview, Diff tabs, Find & Replace, PDF export via print, and session restore (no native FS / Open-with in the browser).
 
 First visit opens an **Online mode** branding dialog with Download + Continue in browser. Reopen anytime: Help → Download desktop…
-
-> Official deploy for this repo: [`npp-x.pages.dev`](https://npp-x.pages.dev). Point a custom domain in Cloudflare if you want.
 
 ## Getting started
 

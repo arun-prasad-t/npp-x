@@ -1,0 +1,31 @@
+{
+  "schema": "npp-x.theme/1",
+  "id": "community-paper-dawn",
+  "name": "Community Paper Dawn",
+  "author": "community",
+  "version": "1.0.0",
+  "description": "Repo-root package example (nppx.package.json).",
+  "chrome": {
+    "--npp-chrome": "#f3f5f8",
+    "--npp-chrome-2": "#e5e9ef",
+    "--npp-border": "#c9d0da",
+    "--npp-text": "#152033",
+    "--npp-accent": "#2f7d32",
+    "--npp-accent-deep": "#1b5e20",
+    "--npp-tab": "#eef2f7",
+    "--npp-tab-active": "#ffffff",
+    "--npp-status": "#e8edf3",
+    "--npp-menu-bg": "#ffffff",
+    "--npp-find": "#eef3f8",
+    "--npp-shadow": "0 10px 28px rgba(21, 32, 51, 0.1)",
+    "color-scheme": "light"
+  },
+  "monaco": {
+    "base": "vs",
+    "inherit": true,
+    "colors": {
+      "editor.background": "#ffffff",
+      "editor.lineHighlightBackground": "#f0f5eb"
+    }
+  }
+}

@@ -94,9 +94,9 @@ export function MarketplacePanel(props: Props) {
             <div>
               <h2>{props.tab === "themes" ? "Theme Store" : "Plugin Store"}</h2>
               <p>
-                Install from a local JSON file or any public git / raw URL.
-                Optional community plugins (HTML preview, CSV table) ship
-                bundled — enable them here when you want them.
+                Enable bundled plugins below, or install more from a JSON file /
+                public git URL. Demo packages also ship on this site under{" "}
+                <code>/community/examples/</code>.
               </p>
             </div>
           </div>
@@ -111,7 +111,7 @@ export function MarketplacePanel(props: Props) {
             <input
               value={gitUrl}
               onChange={(e) => setGitUrl(e.target.value)}
-              placeholder="https://github.com/you/nppx-theme or …/theme.json"
+              placeholder="/community/examples/plugin.trim-trailing.json"
             />
           </label>
           <div className="market-install-actions">
@@ -121,6 +121,24 @@ export function MarketplacePanel(props: Props) {
             <button type="button" disabled={busy} onClick={onPickFile}>
               Install from file…
             </button>
+            {props.tab === "plugins" ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setGitUrl("/community/examples/plugin.trim-trailing.json");
+                  setBusy(true);
+                  void installFromGitUrl(
+                    "/community/examples/plugin.trim-trailing.json",
+                  ).then((r) => {
+                    report(r);
+                    setBusy(false);
+                  });
+                }}
+              >
+                Install demo plugin
+              </button>
+            ) : null}
           </div>
           {status ? <p className="market-status">{status}</p> : null}
         </section>
