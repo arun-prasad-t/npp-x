@@ -16,6 +16,7 @@ export type DispatchContext = {
   exitDiff: () => void;
   toggleRememberSession: () => void;
   checkForUpdates: (interactive: boolean) => void;
+  showDownloadDesktop: () => void;
   showAbout: () => void;
   // file ops
   newFile: () => void;
@@ -428,6 +429,8 @@ export async function dispatchCommand(
 
     case NPPX.CHECK_UPDATES:
       return ctx.checkForUpdates(true);
+    case NPPX.DOWNLOAD_DESKTOP:
+      return ctx.showDownloadDesktop();
     case CMD.IDM_ABOUT:
       return ctx.showAbout();
 

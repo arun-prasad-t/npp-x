@@ -1,0 +1,5 @@
+# Cloudflare Pages — connect the GitHub repo in the dashboard, or:
+#   npm run build && npx wrangler pages deploy dist
+name = "npp-x"
+compatibility_date = "2026-10-25"
+pages_build_output_dir = "dist"

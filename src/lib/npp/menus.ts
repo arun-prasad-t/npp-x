@@ -261,6 +261,7 @@ export const TOP_MENUS: TopMenu[] = [
     label: "Help",
     items: [
       { kind: "item", id: -1040, label: "Check for Updates…" },
+      { kind: "item", id: -1041, label: "Download desktop…" },
       sep(),
       item("IDM_ABOUT", "About npp-x…"),
     ],
@@ -281,4 +282,5 @@ export const NPPX = {
   DIFF_EXIT: -1022,
   REMEMBER_SESSION: -1030,
   CHECK_UPDATES: -1040,
+  DOWNLOAD_DESKTOP: -1041,
 } as const;
