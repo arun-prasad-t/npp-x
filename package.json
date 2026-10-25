@@ -30,7 +30,8 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^6.0.2",
     "typescript": "~6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "wrangler": "^4.152.0"
   },
   "description": "Markdown preview + Mermaid, HTML/CSV preview, export MD/HTML/CSV to PDF, Diff check, Find & Replace — Notepad++-inspired for Linux, macOS, Windows. Try https://npp-x.npp-x.workers.dev",
   "keywords": [
