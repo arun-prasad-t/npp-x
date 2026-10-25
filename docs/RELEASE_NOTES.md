@@ -1,31 +1,16 @@
-## npp-x 0.1.6
+## npp-x 0.1.7
 
-The Mac & Linux Notepad++ people asked for — with previews, PDF export, and Find that finally feels like N++.
+### Fixes
+- **Export PDF on desktop** — no more “pop-ups blocked”; print dialog opens from a hidden iframe
 
-### Editor & search
-- **N++-style Find & Replace** — Normal / Extended / Regex, Count, Find All, Mark, Replace All across open docs (REA dialog 1600)
-- **Diff as its own tab** — top-level **Diff** menu; Compare Tabs / Clipboard; no sticky overlay when you switch files
-- **Per-tab undo** — each document keeps its own undo stack (Monaco models)
+### Site / discoverability
+- Stronger SEO metadata for Markdown preview, MD/HTML/CSV → PDF, Diff check, Find & Replace
+- `robots.txt` + `sitemap.xml` on https://npp-x.pages.dev
 
-### Previews (on by default)
-- **HTML Preview** · **CSV Table** · **Markdown + Mermaid** (flow, sequence, class, …)
-- **Split view first** — editor | preview side-by-side; expand to **Full** anytime
-- **Quick preview chip** — paste HTML / MD / CSV and open preview without hunting menus
-- **Export PDF** — preview toolbar or File → Export Preview as PDF… (system print → Save as PDF)
-- Previews are **per file** — switch tabs and they follow (or stay closed)
-
-### Desktop
-- **Open with npp-x** — registers `.txt` `.csv` `.html` `.md` (set as default in your OS)
-- **Auto-update** — Help → Check for Updates shows full release notes (even when you’re current)
-- **About npp-x** — brand pitch, pillars, and what’s new
-
-### Fun optional plugins
-- **YouTube PiP** — corner player, draggable, doesn’t steal editor shortcuts
-- **Type Runner** — vector buddy that runs / zooms / naps with your typing speed
-
-### Also
-- Click-stable menus (no hover race); Plugins use submenus
-- Live demo: https://npp-x.pages.dev
+### Still in 0.1.6+
+- N++-style Find & Replace; Diff tabs; HTML / CSV / Markdown+Mermaid previews (split/full)
+- Export Preview as PDF; Open-with for `.txt` `.csv` `.html` `.md`
+- Auto-update notes; YouTube PiP + Type Runner (optional)
 
 ### Downloads
 | Platform | Asset |
@@ -39,4 +24,4 @@ The Mac & Linux Notepad++ people asked for — with previews, PDF export, and Fi
 Builds are **ad-hoc signed** (not Apple-notarized). After install, use **Open-npp-x.command** from the release, or:
 `xattr -cr /Applications/npp-x.app && open /Applications/npp-x.app`
 
-Guide: [docs/MACOS-OPEN.md](https://github.com/arun-prasad-t/npp-x/blob/main/docs/MACOS-OPEN.md)
+Guide: https://github.com/arun-prasad-t/npp-x/blob/main/docs/MACOS-OPEN.md

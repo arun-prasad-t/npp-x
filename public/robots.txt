@@ -1,0 +1,5 @@
+# https://npp-x.pages.dev
+User-agent: *
+Allow: /
+
+Sitemap: https://npp-x.pages.dev/sitemap.xml

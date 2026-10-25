@@ -96,14 +96,11 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 | **Optional fun plugins** | YouTube corner PiP + Type Runner buddy (draggable; off by default). |
 | **2026 chrome** | Dense slate IDE UI, Plus Jakarta Sans, run-green accent, click-stable menus. |
 
-### What’s new in 0.1.6
+### What’s new in 0.1.7
 
-- Find / Replace / Mark dialog (REA-backed from N++ 8.8.1)
-- Markdown preview with Mermaid; split/full layout for all previews
-- Export Preview as PDF; file associations for text / CSV / HTML / Markdown
-- Diff as a top-level menu + dedicated tab
-- YouTube PiP no longer steals shortcuts; companions are freely movable
-- Stronger About + update dialog with release notes
+- **Export PDF** works on desktop (no pop-up blocker)
+- Live site SEO for *markdown preview*, *md/html/csv to pdf*, *diff check*
+- From 0.1.6: Find/Replace, Diff tabs, HTML/CSV/MD+Mermaid split preview, Open-with
 
 Full notes: [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md).
 

@@ -1,7 +1,7 @@
 {
   "name": "npp-x",
   "private": true,
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -31,9 +31,19 @@
     "typescript": "~6.0.3",
     "vite": "^8.0.16"
   },
-  "description": "Cross-platform Notepad++-inspired editor for Linux, macOS, and Windows \u2014 Monaco, HTML/CSV preview, Find & Replace, Diff tabs. Try online at https://npp-x.pages.dev",
+  "description": "Markdown preview + Mermaid, HTML/CSV preview, export MD/HTML/CSV to PDF, Diff check, Find & Replace — Notepad++-inspired for Linux, macOS, Windows. Try https://npp-x.pages.dev",
   "keywords": [
     "notepad++",
+    "markdown-preview",
+    "markdown-to-pdf",
+    "export-pdf",
+    "html-to-pdf",
+    "csv-to-pdf",
+    "csv-preview",
+    "html-preview",
+    "mermaid",
+    "diff-check",
+    "find-replace",
     "text-editor",
     "code-editor",
     "monaco",
@@ -42,10 +52,6 @@
     "linux",
     "macos",
     "windows",
-    "html-preview",
-    "csv",
-    "diff",
-    "find-replace",
     "npp-x"
   ],
   "homepage": "https://npp-x.pages.dev",

@@ -696,10 +696,8 @@ export default function App() {
       }
       notify("Opening print dialog — choose Save as PDF");
       const result = await exportHtmlAsPdf(preview.html);
-      if (result === "blocked") {
-        notify("Pop-up blocked — allow pop-ups to export PDF");
-      } else if (result === "error") {
-        notify("PDF export failed");
+      if (result === "blocked" || result === "error") {
+        notify("PDF export failed — try File → Export Preview as PDF again");
       }
     })();
   };
