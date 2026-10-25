@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "deploy:web": "npm run build && npx wrangler deploy",
     "tauri": "tauri"
   },
   "dependencies": {

@@ -1,6 +1,9 @@
-# Cloudflare Worker static site (https://npp-x.npp-x.workers.dev)
-# Build: npm run build
-# Deploy: npx wrangler deploy
+# Cloudflare Worker — https://npp-x.npp-x.workers.dev
+# Builds must upload ./dist as Worker static assets (NOT Pages pages_build_output_dir).
+# Local: npm run build && npx wrangler deploy
 name = "npp-x"
 compatibility_date = "2026-10-25"
-pages_build_output_dir = "./dist"
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"

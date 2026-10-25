@@ -766,7 +766,7 @@ select,
   min-height: 0;
   width: 100%;
   border: 0;
-  background: #0f172a;
+  background: var(--npp-tab-active);
 }
 
 .plugin-docks {

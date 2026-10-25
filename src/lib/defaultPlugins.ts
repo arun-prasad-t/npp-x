@@ -187,12 +187,12 @@ nppx.registerCommand("community.csv.table", () => {
     return "<tr>" + cells + "</tr>";
   }).join("");
   const html = "<!DOCTYPE html><html><head><meta charset=\\"utf-8\\"><style>"
-    + "body{font:13px/1.4 system-ui,sans-serif;margin:12px;background:#0f172a;color:#e2e8f0}"
+    + "body{font:13px/1.4 system-ui,sans-serif;margin:12px;background:var(--pv-bg,#0f172a);color:var(--pv-fg,#e2e8f0)}"
     + "table{border-collapse:collapse;width:100%}"
-    + "th,td{border:1px solid #334155;padding:6px 10px;text-align:left}"
-    + "th{background:#1e293b;position:sticky;top:0}"
-    + "tr:nth-child(even) td{background:#1e293b88}"
-    + "caption{text-align:left;margin-bottom:8px;color:#94a3b8}"
+    + "th,td{border:1px solid var(--pv-border,#334155);padding:6px 10px;text-align:left}"
+    + "th{background:var(--pv-panel,#1e293b);position:sticky;top:0}"
+    + "tr:nth-child(even) td{background:color-mix(in srgb,var(--pv-panel,#1e293b) 55%,transparent)}"
+    + "caption{text-align:left;margin-bottom:8px;color:var(--pv-muted,#94a3b8)}"
     + "</style></head><body>"
     + "<caption>" + esc(nppx.getActiveFileName() || "CSV") + " — " + rows.length + " rows</caption>"
     + "<table><thead>" + thead + "</thead><tbody>" + tbody + "</tbody></table>"

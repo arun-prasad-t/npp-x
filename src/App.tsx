@@ -20,6 +20,11 @@ import { PreviewPane, type PreviewLayout } from "./components/PreviewPane";
 import { PreviewOfferBar } from "./components/PreviewOffer";
 import { buildMarkdownPreviewHtml } from "./lib/mdPreviewHtml";
 import { exportHtmlAsPdf } from "./lib/exportPdf";
+import {
+  resolveAppPreviewScheme,
+  withPreviewScheme,
+  type PreviewScheme,
+} from "./lib/previewTheme";
 import { detectPreviewOffer, PREVIEW_PLUGIN_IDS } from "./lib/previewOffers";
 import {
   PluginDocks,
@@ -162,6 +167,11 @@ export default function App() {
   const [previewLayouts, setPreviewLayouts] = useState<
     Record<string, PreviewLayout>
   >({});
+  const [previewSchemes, setPreviewSchemes] = useState<
+    Record<string, PreviewScheme>
+  >({});
+  const previewSchemesRef = useRef(previewSchemes);
+  previewSchemesRef.current = previewSchemes;
   const [dismissedOffers, setDismissedOffers] = useState<Record<string, string>>(
     {},
   );
@@ -199,6 +209,8 @@ export default function App() {
 
   const activePreview = previews[activeId] ?? null;
   const previewLayout: PreviewLayout = previewLayouts[activeId] ?? "split";
+  const previewScheme: PreviewScheme =
+    previewSchemes[activeId] ?? resolveAppPreviewScheme();
   const previewOffer = detectPreviewOffer(
     active?.language ?? "normal",
     active?.content ?? "",
@@ -209,14 +221,17 @@ export default function App() {
 
   // Drop previews whose tab was closed.
   useEffect(() => {
-    setPreviews((prev) => {
-      const live = new Set(tabs.map((t) => t.id));
+    const live = new Set(tabs.map((t) => t.id));
+    const prune = <T,>(prev: Record<string, T>): Record<string, T> => {
       const keys = Object.keys(prev);
       if (keys.every((k) => live.has(k))) return prev;
-      const next: Record<string, PreviewPayload> = {};
+      const next: Record<string, T> = {};
       for (const k of keys) if (live.has(k)) next[k] = prev[k];
       return next;
-    });
+    };
+    setPreviews(prune);
+    setPreviewLayouts(prune);
+    setPreviewSchemes(prune);
   }, [tabs]);
 
   // IndexedDB may hold a larger session if localStorage was over quota last time
@@ -465,11 +480,13 @@ export default function App() {
         // Previews are per file: only visible on the tab that opened them.
         openPreview: (payload: PreviewPayload) => {
           const tabId = activeIdRef.current;
+          const scheme =
+            previewSchemesRef.current[tabId] ?? resolveAppPreviewScheme();
           const next: PreviewPayload =
             payload.mode === "markdown"
               ? {
                   title: payload.title,
-                  html: buildMarkdownPreviewHtml(payload.html),
+                  html: buildMarkdownPreviewHtml(payload.html, scheme),
                   allowScripts: true,
                   mode: "markdown",
                 }
@@ -477,6 +494,9 @@ export default function App() {
           setPreviews((prev) => ({ ...prev, [tabId]: next }));
           setPreviewLayouts((prev) =>
             prev[tabId] ? prev : { ...prev, [tabId]: "split" },
+          );
+          setPreviewSchemes((prev) =>
+            prev[tabId] ? prev : { ...prev, [tabId]: scheme },
           );
         },
         closePreview: () => {
@@ -695,7 +715,11 @@ export default function App() {
         return;
       }
       notify("Opening print dialog — choose Save as PDF");
-      const result = await exportHtmlAsPdf(preview.html);
+      const scheme =
+        previewSchemes[activeIdRef.current] ?? resolveAppPreviewScheme();
+      const result = await exportHtmlAsPdf(
+        withPreviewScheme(preview.html, scheme),
+      );
       if (result === "blocked" || result === "error") {
         notify("PDF export failed — try File → Export Preview as PDF again");
       }
@@ -1329,12 +1353,29 @@ export default function App() {
                   html={activePreview.html}
                   allowScripts={activePreview.allowScripts}
                   layout={previewLayout}
+                  scheme={previewScheme}
                   onLayout={(layout) =>
                     setPreviewLayouts((prev) => ({
                       ...prev,
                       [activeId]: layout,
                     }))
                   }
+                  onScheme={(scheme) => {
+                    setPreviewSchemes((prev) => ({
+                      ...prev,
+                      [activeId]: scheme,
+                    }));
+                    if (activePreview.mode === "markdown") {
+                      const raw = active?.content ?? "";
+                      setPreviews((prev) => ({
+                        ...prev,
+                        [activeId]: {
+                          ...activePreview,
+                          html: buildMarkdownPreviewHtml(raw, scheme),
+                        },
+                      }));
+                    }
+                  }}
                   onRefresh={
                     activePreview.mode === "markdown"
                       ? () => {
@@ -1343,7 +1384,10 @@ export default function App() {
                             ...prev,
                             [activeId]: {
                               ...activePreview,
-                              html: buildMarkdownPreviewHtml(raw),
+                              html: buildMarkdownPreviewHtml(
+                                raw,
+                                previewScheme,
+                              ),
                             },
                           }));
                         }

@@ -1,11 +1,19 @@
+import { useMemo } from "react";
+import {
+  type PreviewScheme,
+  withPreviewScheme,
+} from "../lib/previewTheme";
+
 export type PreviewLayout = "split" | "full";
 
 type Props = {
   title: string;
   html: string;
   layout: PreviewLayout;
+  scheme: PreviewScheme;
   allowScripts?: boolean;
   onLayout: (layout: PreviewLayout) => void;
+  onScheme: (scheme: PreviewScheme) => void;
   onClose: () => void;
   onRefresh?: () => void;
   onExportPdf?: () => void;
@@ -14,17 +22,25 @@ type Props = {
 /**
  * Preview surface for HTML / CSV / Markdown.
  * Defaults to side-by-side with the editor; user can expand to full.
+ * Light/Dark follows the app theme by default; toolbar toggle overrides.
  */
 export function PreviewPane({
   title,
   html,
   layout,
+  scheme,
   allowScripts,
   onLayout,
+  onScheme,
   onClose,
   onRefresh,
   onExportPdf,
 }: Props) {
+  const srcDoc = useMemo(
+    () => withPreviewScheme(html, scheme),
+    [html, scheme],
+  );
+
   return (
     <div className="preview-pane">
       <div className="preview-toolbar">
@@ -45,6 +61,13 @@ export function PreviewPane({
             onClick={() => onLayout("full")}
           >
             Full
+          </button>
+          <button
+            type="button"
+            title={`Preview is ${scheme} (matches npp-x theme until you toggle)`}
+            onClick={() => onScheme(scheme === "dark" ? "light" : "dark")}
+          >
+            {scheme === "dark" ? "Light" : "Dark"}
           </button>
           {onRefresh ? (
             <button type="button" onClick={onRefresh}>
@@ -75,7 +98,7 @@ export function PreviewPane({
             ? "allow-scripts allow-popups allow-downloads"
             : ""
         }
-        srcDoc={html}
+        srcDoc={srcDoc}
         referrerPolicy="no-referrer"
       />
     </div>
