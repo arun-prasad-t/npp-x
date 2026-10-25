@@ -6,15 +6,15 @@ import { APP_VERSION } from "./appVersion";
  */
 export const WHATS_NEW = `## npp-x ${APP_VERSION}
 
-### Fixes
-- **Export PDF on desktop** — no more “pop-ups blocked”; print dialog opens reliably
+### Previews
+- **Light / Dark toggle** — follows your npp-x theme by default (no forced dark iframe)
 
-### Site
-- SEO for Markdown preview, MD/HTML/CSV → PDF, Diff check — live at https://npp-x.npp-x.workers.dev
+### Fixes
+- **Export PDF** on desktop (no pop-up blocker)
+- Live site at https://npp-x.npp-x.workers.dev actually updates on deploy
 
 ### Still with you
-- **Find & Replace** (Normal / Extended / Regex) · **Diff** tabs · **HTML / CSV / Markdown+Mermaid** split preview
-- **Export PDF** · Open-with \`.txt\` \`.csv\` \`.html\` \`.md\` · auto-update notes
+- Find & Replace · Diff tabs · HTML / CSV / Markdown+Mermaid · Export PDF · Open-with
 
 ### macOS (Gatekeeper)
 Builds are **ad-hoc signed**. Use **Open-npp-x.command** from the release, or:
@@ -52,7 +52,9 @@ export async function fetchLatestReleaseNotes(): Promise<GithubRelease> {
       tag,
       name: data.name?.trim() || tag,
       body: (data.body ?? "").trim() || WHATS_NEW,
-      htmlUrl: data.html_url?.trim() || `https://github.com/arun-prasad-t/npp-x/releases/tag/${tag}`,
+      htmlUrl:
+        data.html_url?.trim() ||
+        `https://github.com/arun-prasad-t/npp-x/releases/tag/${tag}`,
       publishedAt: data.published_at?.trim() || "",
     };
   } catch {

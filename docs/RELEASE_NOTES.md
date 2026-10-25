@@ -1,16 +1,19 @@
-## npp-x 0.1.7
+## npp-x 0.1.8
 
-### Fixes
-- **Export PDF on desktop** — no more “pop-ups blocked”; print dialog opens from a hidden iframe
+### Previews
+- **Light / Dark toggle** on the preview toolbar — defaults to the active npp-x theme (no more forced dark)
 
-### Site / discoverability
-- Stronger SEO metadata for Markdown preview, MD/HTML/CSV → PDF, Diff check, Find & Replace
-- `robots.txt` + `sitemap.xml` on https://npp-x.npp-x.workers.dev
+### Desktop
+- **Export PDF** — print dialog via hidden iframe (no pop-up blocked)
 
-### Still in 0.1.6+
-- N++-style Find & Replace; Diff tabs; HTML / CSV / Markdown+Mermaid previews (split/full)
-- Export Preview as PDF; Open-with for `.txt` `.csv` `.html` `.md`
-- Auto-update notes; YouTube PiP + Type Runner (optional)
+### Live site (https://npp-x.npp-x.workers.dev)
+- Canonical URL + SEO for Markdown preview, MD/HTML/CSV → PDF, Diff check
+- Worker static assets deploy (`[assets]` in wrangler) so successful builds actually ship
+- Plugin Store: demo packages under `/community/examples/`, store overlay above chrome
+
+### Still with you
+- N++-style Find & Replace · Diff tabs · HTML / CSV / Markdown+Mermaid split preview
+- Open-with `.txt` `.csv` `.html` `.md` · auto-update notes · optional YouTube PiP / Type Runner
 
 ### Downloads
 | Platform | Asset |

@@ -1,6 +1,6 @@
 [package]
 name = "npp-x"
-version = "0.1.7"
+version = "0.1.8"
 description = "Cross-platform Notepad++-inspired editor (Tauri + Rust)"
 authors = ["npp-x"]
 edition = "2021"
