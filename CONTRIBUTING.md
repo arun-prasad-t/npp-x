@@ -71,13 +71,23 @@ See `community/examples/theme.obsidian-ink.json`.
 | --- | --- |
 | `notify(message)` | Toast / status message |
 | `getActiveText()` | Active document text |
+| `getActiveFileName()` | Active tab name |
+| `getActiveLanguage()` | Language key (e.g. `html`, `csv`) |
 | `setActiveText(text)` | Replace active document |
 | `insertText(text)` | Insert at cursor (best-effort) |
+| `openPreview({ title, html })` | Sandboxed HTML preview pane (CSS ok, scripts blocked) |
+| `closePreview()` | Dismiss preview |
 | `registerCommand(id, fn)` | Bind a contributed command |
 
 Plugins run in a restricted `Function` sandbox with only the `nppx` argument. Treat third-party plugins like any untrusted code you choose to enable.
 
-See `community/examples/plugin.trim-trailing.json`.
+**Optional preview examples** (Plugin Store → enable, then Tools menu):
+
+- `community/examples/plugin.html-preview.json` — HTML design preview
+- `community/examples/plugin.csv-table.json` — CSV / TSV table render
+- `community/examples/plugin.trim-trailing.json` — trim trailing spaces
+
+Bundled community plugins stay **off by default** so users opt in.
 
 ## Git repo layout (recommended)
 

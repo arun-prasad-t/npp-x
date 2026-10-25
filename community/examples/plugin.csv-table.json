@@ -1,0 +1,27 @@
+{
+  "schema": "npp-x.plugin/1",
+  "id": "community.csv-table",
+  "name": "CSV Table View",
+  "author": "community",
+  "version": "1.0.0",
+  "description": "Optional: parse CSV/TSV in the active buffer and show a table preview.",
+  "contributes": {
+    "commands": [
+      {
+        "id": "community.csv.table",
+        "title": "CSV: Table Preview"
+      },
+      {
+        "id": "community.csv.tableClose",
+        "title": "CSV: Close Preview"
+      }
+    ],
+    "menus": {
+      "tools": [
+        "community.csv.table",
+        "community.csv.tableClose"
+      ]
+    }
+  },
+  "code": "\nfunction parseCsv(text) {\n  const rows = [];\n  let row = [];\n  let cell = \"\";\n  let i = 0;\n  let q = false;\n  const s = text.replace(/^\\uFEFF/, \"\");\n  while (i < s.length) {\n    const c = s[i];\n    if (q) {\n      if (c === '\"') {\n        if (s[i + 1] === '\"') { cell += '\"'; i += 2; continue; }\n        q = false; i++; continue;\n      }\n      cell += c; i++; continue;\n    }\n    if (c === '\"') { q = true; i++; continue; }\n    if (c === \",\" || c === \"\\t\") { row.push(cell); cell = \"\"; i++; continue; }\n    if (c === \"\\n\" || c === \"\\r\") {\n      if (c === \"\\r\" && s[i + 1] === \"\\n\") i++;\n      row.push(cell); cell = \"\";\n      if (row.length > 1 || row[0] !== \"\") rows.push(row);\n      row = []; i++; continue;\n    }\n    cell += c; i++;\n  }\n  row.push(cell);\n  if (row.length > 1 || row[0] !== \"\") rows.push(row);\n  return rows;\n}\nfunction esc(t) {\n  return String(t).replace(/&/g,\"&amp;\").replace(/</g,\"&lt;\").replace(/>/g,\"&gt;\").replace(/\"/g,\"&quot;\");\n}\nnppx.registerCommand(\"community.csv.table\", () => {\n  const raw = nppx.getActiveText();\n  if (!raw.trim()) { nppx.notify(\"Empty buffer\"); return; }\n  const rows = parseCsv(raw);\n  if (!rows.length) { nppx.notify(\"No CSV rows found\"); return; }\n  const header = rows[0];\n  const body = rows.slice(1);\n  let thead = \"<tr>\" + header.map(h => \"<th>\" + esc(h) + \"</th>\").join(\"\") + \"</tr>\";\n  let tbody = body.map(r => {\n    const cells = header.map((_, i) => \"<td>\" + esc(r[i] ?? \"\") + \"</td>\").join(\"\");\n    return \"<tr>\" + cells + \"</tr>\";\n  }).join(\"\");\n  const html = \"<!DOCTYPE html><html><head><meta charset=\\\"utf-8\\\"><style>\"\n    + \"body{font:13px/1.4 system-ui,sans-serif;margin:12px;background:#0f172a;color:#e2e8f0}\"\n    + \"table{border-collapse:collapse;width:100%}\"\n    + \"th,td{border:1px solid #334155;padding:6px 10px;text-align:left}\"\n    + \"th{background:#1e293b;position:sticky;top:0}\"\n    + \"tr:nth-child(even) td{background:#1e293b88}\"\n    + \"caption{text-align:left;margin-bottom:8px;color:#94a3b8}\"\n    + \"</style></head><body>\"\n    + \"<caption>\" + esc(nppx.getActiveFileName() || \"CSV\") + \" — \" + rows.length + \" rows</caption>\"\n    + \"<table><thead>\" + thead + \"</thead><tbody>\" + tbody + \"</tbody></table>\"\n    + \"</body></html>\";\n  nppx.openPreview({ title: \"CSV Table — \" + (nppx.getActiveFileName() || \"untitled\"), html });\n});\nnppx.registerCommand(\"community.csv.tableClose\", () => {\n  nppx.closePreview();\n});\n"
+}

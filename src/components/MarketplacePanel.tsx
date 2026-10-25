@@ -8,9 +8,17 @@ import {
   removeInstalledTheme,
   type InstallResult,
 } from "../lib/marketplace";
+import { COMMUNITY_PLUGINS } from "../lib/communityPlugins";
+import { DEFAULT_PLUGINS } from "../lib/defaultPlugins";
 import { EXAMPLE_PLUGIN, type PluginPackage } from "../lib/plugins";
 import { BUILTIN_THEMES, type ThemePackage } from "../lib/themes";
 import { Logo } from "./Logo";
+
+const BUNDLED_PLUGIN_IDS = new Set([
+  EXAMPLE_PLUGIN.id,
+  ...DEFAULT_PLUGINS.map((p) => p.id),
+  ...COMMUNITY_PLUGINS.map((p) => p.id),
+]);
 
 type Props = {
   open: boolean;
@@ -41,9 +49,10 @@ export function MarketplacePanel(props: Props) {
     ...BUILTIN_THEMES,
     ...installedThemes.filter((t) => !BUILTIN_THEMES.some((b) => b.id === t.id)),
   ];
+  const bundled = [...DEFAULT_PLUGINS, EXAMPLE_PLUGIN, ...COMMUNITY_PLUGINS];
   const plugins = [
-    EXAMPLE_PLUGIN,
-    ...installedPlugins.filter((p) => p.id !== EXAMPLE_PLUGIN.id),
+    ...bundled,
+    ...installedPlugins.filter((p) => !bundled.some((b) => b.id === p.id)),
   ];
 
   const report = (result: InstallResult) => {
@@ -84,7 +93,11 @@ export function MarketplacePanel(props: Props) {
             <Logo size={28} />
             <div>
               <h2>{props.tab === "themes" ? "Theme Store" : "Plugin Store"}</h2>
-              <p>Install from a local JSON file or any public git / raw URL.</p>
+              <p>
+                Install from a local JSON file or any public git / raw URL.
+                Optional community plugins (HTML preview, CSV table) ship
+                bundled — enable them here when you want them.
+              </p>
             </div>
           </div>
           <button type="button" className="ghost" onClick={props.onClose}>
@@ -179,7 +192,7 @@ export function MarketplacePanel(props: Props) {
                         {cmd.title}
                       </button>
                     ))}
-                    {plugin.id !== EXAMPLE_PLUGIN.id ? (
+                    {!BUNDLED_PLUGIN_IDS.has(plugin.id) ? (
                       <button
                         type="button"
                         className="ghost"

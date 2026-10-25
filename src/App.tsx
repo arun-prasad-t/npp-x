@@ -9,7 +9,12 @@ import { FindBar } from "./components/FindBar";
 import { MarketplacePanel } from "./components/MarketplacePanel";
 import { ShortcutMapper } from "./components/ShortcutMapper";
 import { DiffPane } from "./components/DiffPane";
+import { PreviewPane } from "./components/PreviewPane";
 import { BrowserSessionBanner } from "./components/BrowserSessionBanner";
+import {
+  BrowserWelcomeDialog,
+  RELEASES_URL,
+} from "./components/BrowserWelcomeDialog";
 import { formatJson, formatXml } from "./lib/formatters";
 import {
   createFromFile,
@@ -17,13 +22,16 @@ import {
   type DocumentTab,
 } from "./lib/documents";
 import { ENCODINGS, monacoForLanguage } from "./lib/languages";
+import { BROWSER_OPEN_ACCEPT, OPEN_FILE_FILTERS } from "./lib/fileFilters";
 import { listInstalledPlugins } from "./lib/marketplace";
 import {
   activatePlugin,
   EXAMPLE_PLUGIN,
   type PluginPackage,
+  type PreviewPayload,
 } from "./lib/plugins";
 import { DEFAULT_PLUGINS } from "./lib/defaultPlugins";
+import { COMMUNITY_PLUGINS } from "./lib/communityPlugins";
 import {
   applyChromeTheme,
   BUILTIN_THEMES,
@@ -40,6 +48,11 @@ import {
   setRememberSessionEnabled,
 } from "./lib/session";
 import { checkForUpdate, installAvailableUpdate } from "./lib/updater";
+import {
+  disposeClosedTabModels,
+  replaceEditorBuffer,
+  tabModelPath,
+} from "./lib/docModels";
 import { isTauri, readTextFile, writeTextFile } from "./lib/tauri";
 import "./App.css";
 
@@ -104,6 +117,8 @@ export default function App() {
     language: string;
     label: string;
   } | null>(null);
+  const [preview, setPreview] = useState<PreviewPayload | null>(null);
+  const [welcomeForceOpen, setWelcomeForceOpen] = useState(false);
 
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
   const commandHandlers = useRef<Map<string, () => void | Promise<void>>>(
@@ -180,7 +195,7 @@ export default function App() {
   const allPlugins = useMemo(() => {
     void catalogTick;
     const installed = listInstalledPlugins();
-    const base = [...DEFAULT_PLUGINS, EXAMPLE_PLUGIN];
+    const base = [...DEFAULT_PLUGINS, EXAMPLE_PLUGIN, ...COMMUNITY_PLUGINS];
     return [
       ...base,
       ...installed.filter((p) => !base.some((b) => b.id === p.id)),
@@ -245,18 +260,26 @@ export default function App() {
       const api = {
         id: plugin.id,
         notify,
-        getActiveText: () => {
-          const id = activeIdRef.current;
-          return tabs.find((t) => t.id === id)?.content ?? "";
-        },
+        getActiveText: () =>
+          editorRef.current?.getModel()?.getValue() ??
+          tabs.find((t) => t.id === activeIdRef.current)?.content ??
+          "",
+        getActiveFileName: () =>
+          tabs.find((t) => t.id === activeIdRef.current)?.name ?? "",
+        getActiveLanguage: () =>
+          tabs.find((t) => t.id === activeIdRef.current)?.language ?? "normal",
         setActiveText: (text: string) => {
-          updateActive({ content: text, dirty: true });
+          if (!replaceEditorBuffer(editorRef.current, text, "plugin")) {
+            updateActive({ content: text, dirty: true });
+          }
         },
         insertText: (text: string) => {
           const ed = editorRef.current;
           if (!ed) {
             updateActive({
-              content: (tabs.find((t) => t.id === activeIdRef.current)?.content ?? "") + text,
+              content:
+                (tabs.find((t) => t.id === activeIdRef.current)?.content ??
+                  "") + text,
               dirty: true,
             });
             return;
@@ -267,6 +290,11 @@ export default function App() {
             { range: sel, text, forceMoveMarkers: true },
           ]);
         },
+        openPreview: (payload: PreviewPayload) => {
+          setDiff(null);
+          setPreview(payload);
+        },
+        closePreview: () => setPreview(null),
         registerCommand: (id: string, handler: () => void | Promise<void>) => {
           commandHandlers.current.set(id, handler);
         },
@@ -294,6 +322,17 @@ export default function App() {
     localStorage.setItem(MACRO_KEY, JSON.stringify(savedMacros));
   }, [savedMacros]);
 
+  // Per-tab Monaco models hold undo/redo; dispose when a tab closes (N++ style).
+  useEffect(() => {
+    let cancelled = false;
+    void loader.init().then((monaco) => {
+      if (!cancelled) disposeClosedTabModels(monaco, tabs.map((t) => t.id));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [tabs]);
+
   const onMount: OnMount = (ed) => {
     editorRef.current = ed;
     ed.onDidChangeCursorSelection((e) => {
@@ -317,7 +356,7 @@ export default function App() {
     if (isTauri()) {
       const selected = await openDialog({
         multiple: false,
-        filters: [{ name: "Text", extensions: ["*"] }],
+        filters: [...OPEN_FILE_FILTERS],
       });
       if (!selected || Array.isArray(selected)) return;
       const file = await readTextFile(selected);
@@ -328,6 +367,7 @@ export default function App() {
     }
     const input = document.createElement("input");
     input.type = "file";
+    input.accept = BROWSER_OPEN_ACCEPT;
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
@@ -341,6 +381,8 @@ export default function App() {
 
   const persist = async (saveAs: boolean) => {
     if (!active) return;
+    const content =
+      editorRef.current?.getModel()?.getValue() ?? active.content;
     let path = active.path;
     if (isTauri()) {
       if (saveAs || !path) {
@@ -348,12 +390,12 @@ export default function App() {
         if (!picked) return;
         path = picked;
       }
-      await writeTextFile(path, active.content);
+      await writeTextFile(path, content);
       const name = path.split(/[/\\]/).pop() ?? active.name;
-      updateActive({ path, name, dirty: false });
+      updateActive({ path, name, content, dirty: false });
       return;
     }
-    const blob = new Blob([active.content], { type: "text/plain" });
+    const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -432,7 +474,10 @@ export default function App() {
       ]);
       return;
     }
-    updateActive({ content: fn(active?.content ?? ""), dirty: true });
+    const src = model?.getValue() ?? active?.content ?? "";
+    if (!replaceEditorBuffer(ed, fn(src), "xform")) {
+      updateActive({ content: fn(src), dirty: true });
+    }
   };
 
   const runCommand = useCallback(
@@ -441,8 +486,16 @@ export default function App() {
         notify,
         editor: editorRef.current,
         getText: () =>
-          tabs.find((t) => t.id === activeIdRef.current)?.content ?? "",
-        setText: (text, dirty = true) => updateActive({ content: text, dirty }),
+          editorRef.current?.getModel()?.getValue() ??
+          tabs.find((t) => t.id === activeIdRef.current)?.content ??
+          "",
+        setText: (text, dirty = true) => {
+          if (!replaceEditorBuffer(editorRef.current, text, "setText")) {
+            updateActive({ content: text, dirty });
+          } else if (!dirty) {
+            updateActive({ dirty: false });
+          }
+        },
         transformSelectionOrDoc,
         newFile: handleNew,
         openFile: () => void handleOpen(),
@@ -477,11 +530,13 @@ export default function App() {
         setEncoding: (enc) => updateActive({ encoding: enc }),
         setEol: (eol) => {
           const text =
-            tabs.find((t) => t.id === activeIdRef.current)?.content ?? "";
-          updateActive({
-            content: text.replace(/\r\n|\r|\n/g, eol),
-            dirty: true,
-          });
+            editorRef.current?.getModel()?.getValue() ??
+            tabs.find((t) => t.id === activeIdRef.current)?.content ??
+            "";
+          const next = text.replace(/\r\n|\r|\n/g, eol);
+          if (!replaceEditorBuffer(editorRef.current, next, "eol")) {
+            updateActive({ content: next, dirty: true });
+          }
           notify(
             eol === "\r\n"
               ? "EOL → Windows (CR LF)"
@@ -501,14 +556,16 @@ export default function App() {
         openShortcutMapper: () => setShortcutOpen(true),
         formatDocument: (kind, minify) => {
           try {
-            const src = tabs.find((t) => t.id === activeIdRef.current)?.content ?? "";
+            const src =
+              editorRef.current?.getModel()?.getValue() ??
+              tabs.find((t) => t.id === activeIdRef.current)?.content ??
+              "";
             const next =
               kind === "json" ? formatJson(src, minify) : formatXml(src, minify);
-            updateActive({
-              content: next,
-              dirty: true,
-              language: kind === "json" ? "json" : "xml",
-            });
+            if (!replaceEditorBuffer(editorRef.current, next, "format")) {
+              updateActive({ content: next, dirty: true });
+            }
+            updateActive({ language: kind === "json" ? "json" : "xml" });
             notify(minify ? `${kind.toUpperCase()} minified` : `${kind.toUpperCase()} formatted`);
           } catch (e) {
             notify(
@@ -534,6 +591,7 @@ export default function App() {
             notify("Invalid tab selection");
             return;
           }
+          setPreview(null);
           setDiff({
             original: other.content,
             modified: cur.content,
@@ -546,6 +604,7 @@ export default function App() {
             try {
               const clip = await navigator.clipboard.readText();
               const cur = tabs.find((t) => t.id === activeIdRef.current);
+              setPreview(null);
               setDiff({
                 original: clip,
                 modified: cur?.content ?? "",
@@ -606,6 +665,15 @@ export default function App() {
               notify(`Update failed: ${installed.message}`);
             }
           })();
+        },
+        showDownloadDesktop: () => {
+          if (!isTauri()) {
+            setWelcomeForceOpen(true);
+            return;
+          }
+          void import("@tauri-apps/plugin-opener").then(({ openUrl }) =>
+            openUrl(RELEASES_URL),
+          );
         },
         showAbout: () => {
           window.alert(
@@ -710,6 +778,11 @@ export default function App() {
 
   return (
     <div className="npp-shell">
+      <BrowserWelcomeDialog
+        autoOpen={!isTauri()}
+        forceOpen={welcomeForceOpen}
+        onClose={() => setWelcomeForceOpen(false)}
+      />
       <BrowserSessionBanner visible={!isTauri()} />
       <MenuBar
         language={active?.language ?? "normal"}
@@ -749,10 +822,12 @@ export default function App() {
         }}
         onReplaceAll={() => {
           if (!query || !active) return;
-          updateActive({
-            content: active.content.split(query).join(replacement),
-            dirty: true,
-          });
+          const src =
+            editorRef.current?.getModel()?.getValue() ?? active.content;
+          const next = src.split(query).join(replacement);
+          if (!replaceEditorBuffer(editorRef.current, next, "replaceAll")) {
+            updateActive({ content: next, dirty: true });
+          }
         }}
         onClose={() => setFindOpen(false)}
       />
@@ -768,9 +843,16 @@ export default function App() {
             label={diff.label}
             onExit={() => setDiff(null)}
           />
+        ) : preview ? (
+          <PreviewPane
+            title={preview.title}
+            html={preview.html}
+            onClose={() => setPreview(null)}
+          />
         ) : (
           <Editor
-            key={active?.id}
+            path={tabModelPath(active?.id ?? "none")}
+            keepCurrentModel
             height="100%"
             theme={monacoThemeName}
             language={monacoForLanguage(active?.language ?? "normal")}

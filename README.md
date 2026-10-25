@@ -21,6 +21,8 @@
 <p align="center">
   <a href="https://github.com/arun-prasad-t/npp-x/releases">Download</a>
   ·
+  <a href="#try-online">Try online</a>
+  ·
   <a href="#the-wait-is-over">The story</a>
   ·
   <a href="#why-npp-x">Why npp-x</a>
@@ -103,6 +105,20 @@ The mark is a bold lowercase **n** (notepad / N++ lineage) plus an accent **x** 
 Full voice, messaging pillars, and logo rules: [docs/brand-guidelines.md](docs/brand-guidelines.md).
 
 ---
+
+## Try online
+
+The Vite UI runs as a **browser demo** (no native FS) — good for trying menus, Monaco, JSON/XML tools, and session restore before you install.
+
+**Host on Cloudflare Pages (free):**
+
+1. [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Workers & Pages** → Create → Connect this GitHub repo  
+2. Build command: `npm run build` · Output directory: `dist` · Node.js: `20`  
+3. Or locally: `npm run build && npx wrangler pages deploy dist` (`wrangler.toml` is already in the repo)
+
+First visit opens an **Online mode** branding dialog with Download + Continue in browser. Reopen anytime: Help → Download desktop…
+
+> After the first deploy, paste the `*.pages.dev` URL into the nav link above (and optionally a custom domain).
 
 ## Getting started
 

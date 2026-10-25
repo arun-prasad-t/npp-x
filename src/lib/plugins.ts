@@ -19,12 +19,48 @@ export type PluginPackage = {
   };
 };
 
+export type PreviewPayload = {
+  title: string;
+  html: string;
+};
+
+export type BottomDockPayload = {
+  /** Stable id so plugins can update/close their own panel. */
+  id: string;
+  title: string;
+  html: string;
+  /** CSS height in px (default 180). */
+  height?: number;
+  /** Needed for YouTube embeds; prefer false. */
+  allowScripts?: boolean;
+};
+
+export type TypingEvent = {
+  cps: number;
+  delta: number;
+  idleMs: number;
+};
+
 export type PluginHostApi = {
   id: string;
   notify: (message: string) => void;
   getActiveText: () => string;
+  getActiveFileName: () => string;
+  getActiveLanguage: () => string;
   setActiveText: (text: string) => void;
   insertText: (text: string) => void;
+  /** Sandboxed HTML preview pane (optional plugins: HTML design, CSV tables, …). */
+  openPreview: (payload: PreviewPayload) => void;
+  closePreview: () => void;
+  /** Bottom companion panel while editing (YouTube, Type Runner, …). */
+  openBottomDock: (payload: BottomDockPayload) => void;
+  updateBottomDock: (
+    id: string,
+    patch: Partial<Omit<BottomDockPayload, "id">>,
+  ) => void;
+  closeBottomDock: (id?: string) => void;
+  /** Fires on editor edits; return unsubscribe. Cleared when plugins rewire. */
+  onTyping: (handler: (ev: TypingEvent) => void) => () => void;
   registerCommand: (id: string, handler: () => void | Promise<void>) => void;
 };
 
