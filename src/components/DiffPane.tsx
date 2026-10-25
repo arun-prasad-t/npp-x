@@ -24,7 +24,7 @@ export function DiffPane({
       <div className="diff-toolbar">
         <span>{label ?? "Diff"}</span>
         <button type="button" onClick={onExit}>
-          Exit Diff
+          Close tab
         </button>
       </div>
       <DiffEditor

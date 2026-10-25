@@ -1,0 +1,27 @@
+{
+  "schema": "npp-x.plugin/1",
+  "id": "community.md-preview",
+  "name": "Markdown Preview",
+  "author": "npp-x",
+  "version": "1.0.0",
+  "description": "GFM Markdown preview with Mermaid diagrams (flow, sequence, class, state, …). Enabled by default.",
+  "contributes": {
+    "commands": [
+      {
+        "id": "community.md.preview",
+        "title": "Preview"
+      },
+      {
+        "id": "community.md.previewClose",
+        "title": "Close Preview"
+      }
+    ],
+    "menus": {
+      "tools": [
+        "community.md.preview",
+        "community.md.previewClose"
+      ]
+    }
+  },
+  "code": "\nnppx.registerCommand(\"community.md.preview\", () => {\n  const raw = nppx.getActiveText();\n  if (!raw.trim()) {\n    nppx.notify(\"Nothing to preview\");\n    return;\n  }\n  nppx.openPreview({\n    title: \"Markdown — \" + (nppx.getActiveFileName() || \"untitled\"),\n    html: raw,\n    mode: \"markdown\",\n    allowScripts: true,\n  });\n});\nnppx.registerCommand(\"community.md.previewClose\", () => {\n  nppx.closePreview();\n});\n"
+}

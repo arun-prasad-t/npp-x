@@ -1,4 +1,4 @@
-import type { DocumentTab } from "../lib/documents";
+import { isDiffTab, type DocumentTab } from "../lib/documents";
 
 type Props = {
   tabs: DocumentTab[];
@@ -12,12 +12,13 @@ export function TabBar({ tabs, activeId, onSelect, onClose }: Props) {
     <div className="tab-bar" role="tablist" aria-label="Documents">
       {tabs.map((tab) => {
         const active = tab.id === activeId;
+        const diff = isDiffTab(tab);
         return (
           <div
             key={tab.id}
             role="tab"
             aria-selected={active}
-            className={`tab${active ? " active" : ""}`}
+            className={`tab${active ? " active" : ""}${diff ? " tab-diff" : ""}`}
             onClick={() => onSelect(tab.id)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") onSelect(tab.id);

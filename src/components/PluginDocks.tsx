@@ -1,5 +1,7 @@
 export type DockPanel = {
   id: string;
+  /** Plugin id that opened it. */
+  owner?: string;
   title: string;
   html: string;
   height: number;

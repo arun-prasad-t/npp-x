@@ -8,9 +8,12 @@ Desktop builds use [`tauri-plugin-updater`](https://v2.tauri.app/plugin/updater/
 
 1. App checks a few seconds after launch (Tauri only).
 2. Or **Help → Check for Updates…**
-3. If a newer version exists → confirm → download → install → relaunch.
+3. **Help → Check for Updates…** always opens a dialog with the latest release notes (even when you’re already up to date).
+4. If a newer version exists → **Download & Install** → relaunch.
 
-Browser / static host cannot install updates; Help opens the Releases page instead.
+Browser / static host cannot auto-install; the same dialog offers **View on GitHub**.
+
+Release body text should match `src/lib/whatsNew.ts` / `docs/RELEASE_NOTES.md` so the updater and in-app UI stay aligned.
 
 ## Maintainer notes
 

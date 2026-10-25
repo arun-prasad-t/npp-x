@@ -18,6 +18,7 @@ export type DispatchContext = {
   checkForUpdates: (interactive: boolean) => void;
   showDownloadDesktop: () => void;
   showAbout: () => void;
+  showFileTypesHelp: () => void;
   // file ops
   newFile: () => void;
   openFile: () => void;
@@ -25,6 +26,9 @@ export type DispatchContext = {
   close: () => void;
   closeAll: () => void;
   exit: () => void;
+  /** Print preview as PDF when open; otherwise print the window. */
+  print: () => void;
+  exportPreviewPdf: () => void;
   // search / view
   find: () => void;
   findNext: () => void;
@@ -212,8 +216,9 @@ export async function dispatchCommand(
     case CMD.IDM_FILE_EXIT:
       return ctx.exit();
     case CMD.IDM_FILE_PRINT:
-      window.print();
-      return;
+      return ctx.print();
+    case NPPX.EXPORT_PREVIEW_PDF:
+      return ctx.exportPreviewPdf();
     case CMD.IDM_FILE_RELOAD:
       ctx.notify("Reload: re-open the file from disk (Save first if needed)");
       return;
@@ -433,6 +438,8 @@ export async function dispatchCommand(
       return ctx.showDownloadDesktop();
     case CMD.IDM_ABOUT:
       return ctx.showAbout();
+    case NPPX.FILE_TYPES_HELP:
+      return ctx.showFileTypesHelp();
 
     default:
       ctx.notify(`Command ${id} is on the N++ map but not implemented yet`);

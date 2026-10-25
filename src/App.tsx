@@ -5,15 +5,33 @@ import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialo
 import { MenuBar } from "./components/MenuBar";
 import { TabBar } from "./components/TabBar";
 import { StatusBar } from "./components/StatusBar";
-import { FindBar } from "./components/FindBar";
+import { FindDialog, type FindActionName, type FindTab } from "./components/FindDialog";
+import { FindResults } from "./components/FindResults";
+import {
+  DEFAULT_FIND_OPTIONS,
+  type FindOptions,
+} from "./lib/findEngine";
+import * as finder from "./lib/findActions";
+import { writeClipboardText } from "./lib/clipboard";
 import { MarketplacePanel } from "./components/MarketplacePanel";
 import { ShortcutMapper } from "./components/ShortcutMapper";
 import { DiffPane } from "./components/DiffPane";
-import { PreviewPane } from "./components/PreviewPane";
+import { PreviewPane, type PreviewLayout } from "./components/PreviewPane";
+import { PreviewOfferBar } from "./components/PreviewOffer";
+import { buildMarkdownPreviewHtml } from "./lib/mdPreviewHtml";
+import { exportHtmlAsPdf } from "./lib/exportPdf";
+import { detectPreviewOffer, PREVIEW_PLUGIN_IDS } from "./lib/previewOffers";
 import {
   PluginDocks,
   type DockPanel,
 } from "./components/PluginDocks";
+import {
+  CompanionBubble,
+  type CompanionPanel,
+} from "./components/CompanionBubble";
+import { AboutDialog } from "./components/AboutDialog";
+import { UpdateDialog } from "./components/UpdateDialog";
+import { BrowserDownloadBanner } from "./components/BrowserDownloadBanner";
 import { BrowserSessionBanner } from "./components/BrowserSessionBanner";
 import {
   BrowserWelcomeDialog,
@@ -21,8 +39,10 @@ import {
 } from "./components/BrowserWelcomeDialog";
 import { formatJson, formatXml } from "./lib/formatters";
 import {
+  createDiffTab,
   createFromFile,
   createUntitled,
+  isDiffTab,
   type DocumentTab,
 } from "./lib/documents";
 import { ENCODINGS, monacoForLanguage } from "./lib/languages";
@@ -55,6 +75,8 @@ import {
   setRememberSessionEnabled,
 } from "./lib/session";
 import { checkForUpdate, installAvailableUpdate } from "./lib/updater";
+import { APP_VERSION, LATEST_RELEASE_URL } from "./lib/appVersion";
+import { fetchLatestReleaseNotes, WHATS_NEW } from "./lib/whatsNew";
 import {
   disposeClosedTabModels,
   replaceEditorBuffer,
@@ -76,7 +98,17 @@ function defaultEnabled(): string[] {
 function loadEnabledPlugins(): string[] {
   try {
     const raw = localStorage.getItem(PLUGIN_ENABLED_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : defaultEnabled();
+    if (!raw) return defaultEnabled();
+    const list = JSON.parse(raw) as string[];
+    // One-shot: ensure default preview plugins stay on for existing sessions.
+    const migrateKey = "nppx.enabledPlugins.previewDefaults.v2";
+    if (!localStorage.getItem(migrateKey)) {
+      localStorage.setItem(migrateKey, "1");
+      const set = new Set(list);
+      for (const id of PREVIEW_PLUGIN_IDS) set.add(id);
+      return [...set];
+    }
+    return list;
   } catch {
     return defaultEnabled();
   }
@@ -94,7 +126,14 @@ export default function App() {
     selection: 0,
   });
   const [findOpen, setFindOpen] = useState(false);
-  const [findMode, setFindMode] = useState<"find" | "replace">("find");
+  const [findTab, setFindTab] = useState<FindTab>("find");
+  const [findOptions, setFindOptions] = useState<FindOptions>(
+    DEFAULT_FIND_OPTIONS,
+  );
+  const [findStatus, setFindStatus] = useState("");
+  const [results, setResults] = useState<finder.ResultSet | null>(null);
+  const findRange = useRef<[number, number] | null>(null);
+  const pendingGoto = useRef<{ id: string; index: number; length: number } | null>(null);
   const [query, setQuery] = useState("");
   const [replacement, setReplacement] = useState("");
   const [toast, setToast] = useState<string | null>(null);
@@ -118,21 +157,34 @@ export default function App() {
       return [];
     }
   });
-  const [diff, setDiff] = useState<{
-    original: string;
-    modified: string;
-    language: string;
-    label: string;
-  } | null>(null);
-  const [preview, setPreview] = useState<PreviewPayload | null>(null);
+  /** HTML / CSV previews are per tab id — switching files hides them. */
+  const [previews, setPreviews] = useState<Record<string, PreviewPayload>>({});
+  const [previewLayouts, setPreviewLayouts] = useState<
+    Record<string, PreviewLayout>
+  >({});
+  const [dismissedOffers, setDismissedOffers] = useState<Record<string, string>>(
+    {},
+  );
   const [docks, setDocks] = useState<DockPanel[]>([]);
+  const [companions, setCompanions] = useState<CompanionPanel[]>([]);
   const [welcomeForceOpen, setWelcomeForceOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [updateUi, setUpdateUi] = useState<{
+    open: boolean;
+    status: "loading" | "latest" | "available" | "error" | "browser";
+    latestVersion?: string;
+    notes: string;
+    releaseUrl: string;
+    error?: string;
+    busy?: boolean;
+  }>({ open: false, status: "loading", notes: "", releaseUrl: LATEST_RELEASE_URL });
+
 
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
   const commandHandlers = useRef<Map<string, () => void | Promise<void>>>(
     new Map(),
   );
-  const typingHandlers = useRef(new Set<(ev: TypingEvent) => void>());
+  const typingHandlers = useRef(new Map<string, (ev: TypingEvent) => void>());
   const typingMeter = useRef(createTypingMeter());
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
@@ -144,6 +196,28 @@ export default function App() {
     () => tabs.find((t) => t.id === activeId) ?? tabs[0],
     [tabs, activeId],
   );
+
+  const activePreview = previews[activeId] ?? null;
+  const previewLayout: PreviewLayout = previewLayouts[activeId] ?? "split";
+  const previewOffer = detectPreviewOffer(
+    active?.language ?? "normal",
+    active?.content ?? "",
+    enabledPluginIds,
+  );
+  const offerDismissed =
+    !!previewOffer && dismissedOffers[activeId] === previewOffer.kind;
+
+  // Drop previews whose tab was closed.
+  useEffect(() => {
+    setPreviews((prev) => {
+      const live = new Set(tabs.map((t) => t.id));
+      const keys = Object.keys(prev);
+      if (keys.every((k) => live.has(k))) return prev;
+      const next: Record<string, PreviewPayload> = {};
+      for (const k of keys) if (live.has(k)) next[k] = prev[k];
+      return next;
+    });
+  }, [tabs]);
 
   // IndexedDB may hold a larger session if localStorage was over quota last time
   useEffect(() => {
@@ -163,9 +237,13 @@ export default function App() {
   useEffect(() => {
     if (sessionTimer.current) window.clearTimeout(sessionTimer.current);
     sessionTimer.current = window.setTimeout(() => {
+      const docs = tabs.filter((t) => !isDiffTab(t));
+      if (!docs.length) return;
       void saveSession({
-        activeId,
-        tabs,
+        activeId: docs.some((t) => t.id === activeId)
+          ? activeId
+          : docs[0].id,
+        tabs: docs,
         wordWrap,
         fontSize,
       });
@@ -177,9 +255,12 @@ export default function App() {
 
   useEffect(() => {
     const flush = () => {
+      const docs = tabsRef.current.filter((t) => !isDiffTab(t));
+      if (!docs.length) return;
+      const aid = activeIdRef.current;
       void saveSession({
-        activeId: activeIdRef.current,
-        tabs: tabsRef.current,
+        activeId: docs.some((t) => t.id === aid) ? aid : docs[0].id,
+        tabs: docs,
         wordWrap,
         fontSize,
       });
@@ -228,6 +309,57 @@ export default function App() {
     window.setTimeout(() => setToast(null), 2600);
   }, []);
 
+  const openUpdateCheck = useCallback(() => {
+    void (async () => {
+      setAboutOpen(false);
+      setUpdateUi({
+        open: true,
+        status: "loading",
+        notes: "",
+        releaseUrl: LATEST_RELEASE_URL,
+      });
+      const remote = await fetchLatestReleaseNotes();
+      if (!isTauri()) {
+        setUpdateUi({
+          open: true,
+          status: "browser",
+          latestVersion: remote.tag.replace(/^v/, ""),
+          notes: remote.body,
+          releaseUrl: remote.htmlUrl,
+        });
+        return;
+      }
+      const result = await checkForUpdate();
+      if (result.kind === "error") {
+        setUpdateUi({
+          open: true,
+          status: "error",
+          notes: "",
+          releaseUrl: remote.htmlUrl,
+          error: result.message,
+        });
+        return;
+      }
+      if (result.kind === "available") {
+        setUpdateUi({
+          open: true,
+          status: "available",
+          latestVersion: result.version,
+          notes: (result.notes ?? "").trim() || remote.body || WHATS_NEW,
+          releaseUrl: remote.htmlUrl,
+        });
+        return;
+      }
+      setUpdateUi({
+        open: true,
+        status: "latest",
+        latestVersion: remote.tag.replace(/^v/, ""),
+        notes: remote.body || WHATS_NEW,
+        releaseUrl: remote.htmlUrl,
+      });
+    })();
+  }, []);
+
   // Desktop: quiet update check a few seconds after launch
   useEffect(() => {
     if (!isTauri()) return;
@@ -235,17 +367,17 @@ export default function App() {
       void (async () => {
         const result = await checkForUpdate();
         if (result.kind !== "available") return;
-        const ok = window.confirm(
-          `npp-x ${result.version} is available.\n\n${result.notes?.slice(0, 280) ?? "Update from GitHub Releases."}\n\nDownload and install now?`,
-        );
-        if (!ok) return;
-        notify("Downloading update…");
-        const installed = await installAvailableUpdate();
-        if (installed.kind === "error") notify(`Update failed: ${installed.message}`);
+        setUpdateUi({
+          open: true,
+          status: "available",
+          latestVersion: result.version,
+          notes: (result.notes ?? "").trim() || WHATS_NEW,
+          releaseUrl: LATEST_RELEASE_URL,
+        });
       })();
     }, 4000);
     return () => window.clearTimeout(t);
-  }, [notify]);
+  }, []);
 
   const applyTheme = useCallback(async (theme: ThemePackage) => {
     applyChromeTheme(theme);
@@ -263,9 +395,10 @@ export default function App() {
     setMonacoThemeName(name);
   }, []);
 
-  const upsertDock = useCallback((payload: BottomDockPayload) => {
+  const upsertDock = useCallback((payload: BottomDockPayload, owner: string) => {
     const panel: DockPanel = {
       id: payload.id,
+      owner,
       title: payload.title,
       html: payload.html,
       height: payload.height ?? 180,
@@ -280,22 +413,35 @@ export default function App() {
     });
   }, []);
 
+  // NOTE: must NOT depend on `tabs` — that re-ran on every keystroke and wiped
+  // typing listeners (the Type Runner never moved). Read tabs via tabsRef.
   const wirePlugins = useCallback(() => {
     commandHandlers.current.clear();
-    typingHandlers.current.clear();
+    const enabled = new Set(enabledPluginIds);
+    // Keep typing subscriptions of still-enabled plugins across rewires.
+    for (const id of [...typingHandlers.current.keys()]) {
+      if (!enabled.has(id)) typingHandlers.current.delete(id);
+    }
+    setDocks((prev) => prev.filter((d) => !d.owner || enabled.has(d.owner)));
+    setCompanions((prev) =>
+      prev.filter((c) => !c.owner || enabled.has(c.owner)),
+    );
+
+    const activeTab = () =>
+      tabsRef.current.find((t) => t.id === activeIdRef.current);
+
     for (const plugin of allPlugins) {
-      if (!enabledPluginIds.includes(plugin.id)) continue;
+      if (!enabled.has(plugin.id)) continue;
+      const owner = plugin.id;
       const api = {
         id: plugin.id,
         notify,
         getActiveText: () =>
           editorRef.current?.getModel()?.getValue() ??
-          tabs.find((t) => t.id === activeIdRef.current)?.content ??
+          activeTab()?.content ??
           "",
-        getActiveFileName: () =>
-          tabs.find((t) => t.id === activeIdRef.current)?.name ?? "",
-        getActiveLanguage: () =>
-          tabs.find((t) => t.id === activeIdRef.current)?.language ?? "normal",
+        getActiveFileName: () => activeTab()?.name ?? "",
+        getActiveLanguage: () => activeTab()?.language ?? "normal",
         setActiveText: (text: string) => {
           if (!replaceEditorBuffer(editorRef.current, text, "plugin")) {
             updateActive({ content: text, dirty: true });
@@ -305,9 +451,7 @@ export default function App() {
           const ed = editorRef.current;
           if (!ed) {
             updateActive({
-              content:
-                (tabs.find((t) => t.id === activeIdRef.current)?.content ??
-                  "") + text,
+              content: (activeTab()?.content ?? "") + text,
               dirty: true,
             });
             return;
@@ -318,12 +462,40 @@ export default function App() {
             { range: sel, text, forceMoveMarkers: true },
           ]);
         },
+        // Previews are per file: only visible on the tab that opened them.
         openPreview: (payload: PreviewPayload) => {
-          setDiff(null);
-          setPreview(payload);
+          const tabId = activeIdRef.current;
+          const next: PreviewPayload =
+            payload.mode === "markdown"
+              ? {
+                  title: payload.title,
+                  html: buildMarkdownPreviewHtml(payload.html),
+                  allowScripts: true,
+                  mode: "markdown",
+                }
+              : payload;
+          setPreviews((prev) => ({ ...prev, [tabId]: next }));
+          setPreviewLayouts((prev) =>
+            prev[tabId] ? prev : { ...prev, [tabId]: "split" },
+          );
         },
-        closePreview: () => setPreview(null),
-        openBottomDock: (payload: BottomDockPayload) => upsertDock(payload),
+        closePreview: () => {
+          const tabId = activeIdRef.current;
+          setPreviews((prev) => {
+            if (!(tabId in prev)) return prev;
+            const next = { ...prev };
+            delete next[tabId];
+            return next;
+          });
+          setPreviewLayouts((prev) => {
+            if (!(tabId in prev)) return prev;
+            const next = { ...prev };
+            delete next[tabId];
+            return next;
+          });
+        },
+        openBottomDock: (payload: BottomDockPayload) =>
+          upsertDock(payload, owner),
         updateBottomDock: (
           id: string,
           patch: Partial<Omit<BottomDockPayload, "id">>,
@@ -348,10 +520,74 @@ export default function App() {
         closeBottomDock: (id?: string) => {
           setDocks((prev) => (id ? prev.filter((d) => d.id !== id) : []));
         },
+        openCompanion: (payload: {
+          id: string;
+          html: string;
+          speech?: string;
+          state?: Record<string, unknown>;
+          width?: number;
+          height?: number;
+          allowMedia?: boolean;
+        }) => {
+          setCompanions((prev) => {
+            const next: CompanionPanel = {
+              id: payload.id,
+              owner,
+              html: payload.html,
+              speech: payload.speech,
+              state: payload.state,
+              width: payload.width,
+              height: payload.height,
+              allowMedia: payload.allowMedia,
+            };
+            const i = prev.findIndex((c) => c.id === next.id);
+            if (i < 0) return [...prev, next];
+            const copy = prev.slice();
+            copy[i] = next;
+            return copy;
+          });
+        },
+        updateCompanion: (
+          id: string,
+          patch: {
+            html?: string;
+            speech?: string;
+            state?: Record<string, unknown>;
+            width?: number;
+            height?: number;
+            allowMedia?: boolean;
+          },
+        ) => {
+          setCompanions((prev) =>
+            prev.map((c) =>
+              c.id === id
+                ? {
+                    ...c,
+                    html: patch.html ?? c.html,
+                    width: patch.width ?? c.width,
+                    height: patch.height ?? c.height,
+                    allowMedia:
+                      patch.allowMedia !== undefined
+                        ? patch.allowMedia
+                        : c.allowMedia,
+                    speech:
+                      patch.speech !== undefined ? patch.speech : c.speech,
+                    state: patch.state ?? c.state,
+                  }
+                : c,
+            ),
+          );
+        },
+        closeCompanion: (id?: string) => {
+          setCompanions((prev) => (id ? prev.filter((c) => c.id !== id) : []));
+        },
+        // One typing listener per plugin; calling again replaces the old one.
         onTyping: (handler: (ev: TypingEvent) => void) => {
-          typingHandlers.current.add(handler);
+          typingHandlers.current.set(owner, handler);
           return () => {
-            typingHandlers.current.delete(handler);
+            if (typingHandlers.current.get(owner) === handler) {
+              typingHandlers.current.delete(owner);
+            }
           };
         },
         registerCommand: (id: string, handler: () => void | Promise<void>) => {
@@ -361,7 +597,7 @@ export default function App() {
       const result = activatePlugin(plugin, api);
       if (!result.ok) notify(`Plugin ${plugin.id}: ${result.error}`);
     }
-  }, [allPlugins, enabledPluginIds, notify, tabs, updateActive, upsertDock]);
+  }, [allPlugins, enabledPluginIds, notify, updateActive, upsertDock]);
 
   useEffect(() => {
     const theme =
@@ -409,6 +645,63 @@ export default function App() {
     const tab = createUntitled();
     setTabs((prev) => [...prev, tab]);
     setActiveId(tab.id);
+  };
+
+  const openPathList = async (paths: string[]) => {
+    for (const path of paths) {
+      try {
+        const file = await readTextFile(path);
+        const tab = createFromFile(file.name, file.path, file.content);
+        setTabs((prev) => [...prev, tab]);
+        setActiveId(tab.id);
+      } catch (e) {
+        notify(
+          `Could not open ${path}: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
+  };
+
+  // Desktop: files opened via OS "Open with" / double-click associations
+  useEffect(() => {
+    if (!isTauri()) return;
+    let unlisten: (() => void) | undefined;
+    void (async () => {
+      try {
+        const { invoke } = await import("@tauri-apps/api/core");
+        const { listen } = await import("@tauri-apps/api/event");
+        const pending = await invoke<string[]>("take_pending_files");
+        if (pending?.length) await openPathList(pending);
+        unlisten = await listen<string[]>("nppx-open-files", (ev) => {
+          void openPathList(ev.payload ?? []);
+        });
+      } catch {
+        /* older shell without command */
+      }
+    })();
+    return () => unlisten?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const exportActivePreviewPdf = (opts?: { allowEditorPrint?: boolean }) => {
+    void (async () => {
+      const preview = previews[activeIdRef.current];
+      if (!preview) {
+        if (opts?.allowEditorPrint) {
+          window.print();
+          return;
+        }
+        notify("Open an HTML, CSV, or Markdown preview first");
+        return;
+      }
+      notify("Opening print dialog — choose Save as PDF");
+      const result = await exportHtmlAsPdf(preview.html);
+      if (result === "blocked") {
+        notify("Pop-up blocked — allow pop-ups to export PDF");
+      } else if (result === "error") {
+        notify("PDF export failed");
+      }
+    })();
   };
 
   const handleOpen = async () => {
@@ -477,31 +770,112 @@ export default function App() {
     });
   };
 
-  const findNext = (reverse = false) => {
+  const findCtx = (): finder.FindCtx => ({
+    ed: editorRef.current,
+    tabs: tabsRef.current,
+    activeId: activeIdRef.current,
+    query,
+    options: findOptions,
+    range: findRange.current,
+    goto: gotoHit,
+  });
+
+  const gotoHit = (tabId: string, index: number, length: number) => {
+    if (tabId !== activeIdRef.current) {
+      pendingGoto.current = { id: tabId, index, length };
+      setActiveId(tabId);
+      return;
+    }
+    revealOffset(index, length);
+  };
+
+  const revealOffset = (index: number, length: number) => {
     const ed = editorRef.current;
-    if (!ed || !query) return;
-    const model = ed.getModel();
-    if (!model) return;
-    const matches = model.findMatches(query, true, false, false, null, true);
-    if (!matches.length) return;
-    const pos = ed.getPosition();
-    const ordered = reverse ? [...matches].reverse() : matches;
-    const next =
-      ordered.find((m) =>
-        reverse
-          ? m.range.startLineNumber < (pos?.lineNumber ?? 0) ||
-            (m.range.startLineNumber === pos?.lineNumber &&
-              m.range.startColumn < (pos?.column ?? 0))
-          : m.range.startLineNumber > (pos?.lineNumber ?? 0) ||
-            (m.range.startLineNumber === pos?.lineNumber &&
-              m.range.startColumn >= (pos?.column ?? 0)),
-      ) ?? ordered[0];
-    ed.setSelection(next.range);
-    ed.revealRangeInCenter(next.range);
+    const model = ed?.getModel();
+    if (!ed || !model) return;
+    const a = model.getPositionAt(index);
+    const b = model.getPositionAt(index + length);
+    const range = {
+      startLineNumber: a.lineNumber,
+      startColumn: a.column,
+      endLineNumber: b.lineNumber,
+      endColumn: b.column,
+    };
+    ed.setSelection(range);
+    ed.revealRangeInCenter(range);
+    ed.focus();
+  };
+
+  useEffect(() => {
+    const g = pendingGoto.current;
+    if (!g || g.id !== activeId) return;
+    pendingGoto.current = null;
+    const t = window.setTimeout(() => revealOffset(g.index, g.length), 80);
+    return () => window.clearTimeout(t);
+  }, [activeId]);
+
+  const showOutcome = (o: finder.Outcome) => setFindStatus(o.message);
+
+  const findNext = (reverse = false) => {
+    if (!query) {
+      setFindTab("find");
+      setFindOpen(true);
+      return;
+    }
+    showOutcome(finder.findNext(findCtx(), reverse ? !findOptions.backward : undefined));
+  };
+
+  const runFind = (a: FindActionName) => {
+    const ctx = findCtx();
+    switch (a) {
+      case "findNext":
+        return showOutcome(finder.findNext(ctx));
+      case "count":
+        return showOutcome(finder.count(ctx));
+      case "findAllCurrent":
+      case "findAllOpened": {
+        const r = finder.findAll(ctx, a === "findAllOpened");
+        if ("error" in r) return setFindStatus(r.error);
+        setResults(r.results);
+        return setFindStatus(`Find All: ${r.results.total} hit${r.results.total === 1 ? "" : "s"}`);
+      }
+      case "replace":
+        return showOutcome(finder.replaceOne(ctx, replacement));
+      case "replaceAll":
+      case "replaceAllOpened":
+        return showOutcome(
+          finder.replaceAll(ctx, replacement, a === "replaceAllOpened", (id, content) =>
+            setTabs((prev) =>
+              prev.map((t) => (t.id === id ? { ...t, content, dirty: true } : t)),
+            ),
+          ),
+        );
+      case "markAll":
+        return showOutcome(finder.markAll(ctx));
+      case "clearMarks":
+        finder.clearMarks();
+        return setFindStatus("Marks cleared");
+      case "copyMarked": {
+        const text = finder.markedTextJoined();
+        if (!text) return setFindStatus("Nothing is marked");
+        void writeClipboardText(text);
+        return setFindStatus("Marked text copied to clipboard");
+      }
+    }
+  };
+
+  const openFind = (tab: FindTab) => {
+    const ed = editorRef.current;
+    const model = ed?.getModel();
+    const sel = ed?.getSelection();
+    if (ed && model && sel && !sel.isEmpty() && sel.startLineNumber === sel.endLineNumber) {
+      setQuery(model.getValueInRange(sel));
+    }
+    setFindTab(tab);
+    setFindOpen(true);
   };
 
   const runPluginCommand = (_plugin: PluginPackage, commandId: string) => {
-    wirePlugins();
     const handler = commandHandlers.current.get(commandId);
     if (!handler) {
       notify(`Command not registered: ${commandId}`);
@@ -516,7 +890,7 @@ export default function App() {
     for (const plugin of allPlugins) {
       if (!enabledPluginIds.includes(plugin.id)) continue;
       for (const cmd of plugin.contributes?.commands ?? []) {
-        cmds.push({ plugin, id: cmd.id, title: `${plugin.name}: ${cmd.title}` });
+        cmds.push({ plugin, id: cmd.id, title: cmd.title });
       }
     }
     return cmds;
@@ -558,6 +932,8 @@ export default function App() {
         transformSelectionOrDoc,
         newFile: handleNew,
         openFile: () => void handleOpen(),
+        print: () => exportActivePreviewPdf({ allowEditorPrint: true }),
+        exportPreviewPdf: () => exportActivePreviewPdf(),
         save: (saveAs) => void persist(!!saveAs),
         close: () => handleClose(activeIdRef.current),
         closeAll: () => {
@@ -566,16 +942,10 @@ export default function App() {
           setActiveId(blank.id);
         },
         exit: () => window.close(),
-        find: () => {
-          setFindMode("find");
-          setFindOpen(true);
-        },
+        find: () => openFind("find"),
         findNext: () => findNext(false),
         findPrev: () => findNext(true),
-        replace: () => {
-          setFindMode("replace");
-          setFindOpen(true);
-        },
+        replace: () => openFind("replace"),
         gotoLine: () => {
           const n = window.prompt("Go to line:");
           const line = Number(n);
@@ -633,9 +1003,9 @@ export default function App() {
           }
         },
         openDiffTabs: () => {
-          const list = tabs;
+          const list = tabsRef.current.filter((t) => !isDiffTab(t));
           if (list.length < 2) {
-            notify("Open at least two tabs to compare");
+            notify("Open at least two document tabs to compare");
             return;
           }
           const names = list.map((t, i) => `${i + 1}. ${t.name}`).join("\n");
@@ -650,32 +1020,39 @@ export default function App() {
             notify("Invalid tab selection");
             return;
           }
-          setPreview(null);
-          setDiff({
-            original: other.content,
-            modified: cur.content,
-            language: monacoForLanguage(cur.language),
-            label: `Diff: ${other.name} ← → ${cur.name}`,
-          });
+          const tab = createDiffTab(
+            `Diff: ${other.name} ← → ${cur.name}`,
+            other.content,
+            cur.content,
+            monacoForLanguage(cur.language),
+          );
+          setTabs((prev) => [...prev, tab]);
+          setActiveId(tab.id);
         },
         openDiffClipboard: () => {
           void (async () => {
             try {
               const clip = await navigator.clipboard.readText();
-              const cur = tabs.find((t) => t.id === activeIdRef.current);
-              setPreview(null);
-              setDiff({
-                original: clip,
-                modified: cur?.content ?? "",
-                language: monacoForLanguage(cur?.language ?? "normal"),
-                label: "Diff: Clipboard ← → Active",
-              });
+              const cur =
+                tabsRef.current.find((t) => t.id === activeIdRef.current) ??
+                tabsRef.current.find((t) => !isDiffTab(t));
+              const tab = createDiffTab(
+                "Diff: Clipboard ← → Active",
+                clip,
+                cur?.content ?? "",
+                monacoForLanguage(cur?.language ?? "normal"),
+              );
+              setTabs((prev) => [...prev, tab]);
+              setActiveId(tab.id);
             } catch {
               notify("Clipboard read failed — allow clipboard permission");
             }
           })();
         },
-        exitDiff: () => setDiff(null),
+        exitDiff: () => {
+          const cur = tabsRef.current.find((t) => t.id === activeIdRef.current);
+          if (isDiffTab(cur)) handleClose(cur!.id);
+        },
         toggleRememberSession: () => {
           const next = !isRememberSessionEnabled();
           setRememberSessionEnabled(next);
@@ -692,38 +1069,7 @@ export default function App() {
           }
         },
         checkForUpdates: (interactive) => {
-          void (async () => {
-            if (!isTauri()) {
-              if (interactive) {
-                window.open(
-                  "https://github.com/arun-prasad-t/npp-x/releases/latest",
-                  "_blank",
-                );
-                notify("Browser host — opened GitHub Releases");
-              }
-              return;
-            }
-            if (interactive) notify("Checking for updates…");
-            const result = await checkForUpdate();
-            if (result.kind === "up-to-date") {
-              if (interactive) notify("You’re on the latest version");
-              return;
-            }
-            if (result.kind === "error") {
-              if (interactive) notify(`Update check failed: ${result.message}`);
-              return;
-            }
-            if (result.kind !== "available") return;
-            const ok = window.confirm(
-              `npp-x ${result.version} is available.\n\nInstall update from GitHub Releases now?`,
-            );
-            if (!ok) return;
-            notify("Downloading update…");
-            const installed = await installAvailableUpdate();
-            if (installed.kind === "error") {
-              notify(`Update failed: ${installed.message}`);
-            }
-          })();
+          if (interactive) openUpdateCheck();
         },
         showDownloadDesktop: () => {
           if (!isTauri()) {
@@ -734,9 +1080,20 @@ export default function App() {
             openUrl(RELEASES_URL),
           );
         },
-        showAbout: () => {
+        showAbout: () => setAboutOpen(true),
+        showFileTypesHelp: () => {
           window.alert(
-            "npp-x — cross-platform Notepad++-inspired editor\n\nUpdates: Help → Check for Updates (desktop)\nSession restore keeps unsaved tabs across relaunch.\n\nhttps://github.com/arun-prasad-t/npp-x",
+            "npp-x file types\n\n" +
+              "Desktop installs register npp-x for:\n" +
+              "  • .txt / .text\n" +
+              "  • .csv / .tsv\n" +
+              "  • .html / .htm\n" +
+              "  • .md / .markdown\n\n" +
+              "To make npp-x the default opener:\n" +
+              "  macOS — Get Info → Open with → npp-x → Change All…\n" +
+              "  Windows — Settings → Apps → Default apps\n" +
+              "  Linux — Right-click → Open With → npp-x\n\n" +
+              "Then double-click those files to open them here — with HTML / CSV / Markdown preview + Export PDF.",
           );
         },
         macroStart: () => {
@@ -810,6 +1167,7 @@ export default function App() {
     },
     [
       notify,
+      openUpdateCheck,
       tabs,
       updateActive,
       macroBuffer,
@@ -842,6 +1200,7 @@ export default function App() {
         forceOpen={welcomeForceOpen}
         onClose={() => setWelcomeForceOpen(false)}
       />
+      <BrowserDownloadBanner visible={!isTauri()} />
       <BrowserSessionBanner visible={!isTauri()} />
       <MenuBar
         language={active?.language ?? "normal"}
@@ -860,93 +1219,170 @@ export default function App() {
         onClose={handleClose}
       />
 
-      <FindBar
-        open={findOpen}
-        mode={findMode}
-        query={query}
-        replacement={replacement}
-        onQuery={setQuery}
-        onReplacement={setReplacement}
-        onFindNext={() => findNext(false)}
-        onReplace={() => {
-          const ed = editorRef.current;
-          const sel = ed?.getSelection();
-          const model = ed?.getModel();
-          if (ed && sel && model && model.getValueInRange(sel) === query) {
-            ed.executeEdits("replace", [
-              { range: sel, text: replacement, forceMoveMarkers: true },
-            ]);
-          }
-          findNext(false);
-        }}
-        onReplaceAll={() => {
-          if (!query || !active) return;
-          const src =
-            editorRef.current?.getModel()?.getValue() ?? active.content;
-          const next = src.split(query).join(replacement);
-          if (!replaceEditorBuffer(editorRef.current, next, "replaceAll")) {
-            updateActive({ content: next, dirty: true });
-          }
-        }}
-        onClose={() => setFindOpen(false)}
-      />
+      {findOpen ? (
+        <FindDialog
+          tab={findTab}
+          onTab={setFindTab}
+          query={query}
+          replacement={replacement}
+          options={findOptions}
+          status={findStatus}
+          hasSelection={() => {
+            const ed = editorRef.current;
+            const model = ed?.getModel();
+            const sel = ed?.getSelection();
+            if (!ed || !model || !sel || sel.isEmpty()) return false;
+            findRange.current = [
+              model.getOffsetAt({ lineNumber: sel.startLineNumber, column: sel.startColumn }),
+              model.getOffsetAt({ lineNumber: sel.endLineNumber, column: sel.endColumn }),
+            ];
+            return true;
+          }}
+          onQuery={setQuery}
+          onReplacement={setReplacement}
+          onOptions={(patch) => setFindOptions((o) => ({ ...o, ...patch }))}
+          onAction={runFind}
+          onClose={() => {
+            setFindOpen(false);
+            editorRef.current?.focus();
+          }}
+        />
+      ) : null}
 
       <div className="editor-pane">
-        {diff ? (
+        {isDiffTab(active) && active.view ? (
           <DiffPane
-            original={diff.original}
-            modified={diff.modified}
-            language={diff.language}
+            original={active.view.original}
+            modified={active.view.modified}
+            language={active.view.language}
             theme={monacoThemeName}
             fontSize={fontSize}
-            label={diff.label}
-            onExit={() => setDiff(null)}
-          />
-        ) : preview ? (
-          <PreviewPane
-            title={preview.title}
-            html={preview.html}
-            onClose={() => setPreview(null)}
+            label={active.name}
+            onExit={() => handleClose(active.id)}
           />
         ) : (
-          <Editor
-            path={tabModelPath(active?.id ?? "none")}
-            keepCurrentModel
-            height="100%"
-            theme={monacoThemeName}
-            language={monacoForLanguage(active?.language ?? "normal")}
-            value={active?.content ?? ""}
-            onMount={onMount}
-            onChange={(value) => {
-              const text = value ?? "";
-              updateActive({ content: text, dirty: true });
-              if (typingHandlers.current.size) {
-                const ev = typingMeter.current.note(text.length);
-                for (const h of typingHandlers.current) h(ev);
+          <>
+            {!activePreview && previewOffer && !offerDismissed ? (
+              <PreviewOfferBar
+                offer={previewOffer}
+                onPreview={() => {
+                  const plugin = allPlugins.find(
+                    (p) => p.id === previewOffer.pluginId,
+                  );
+                  if (plugin) runPluginCommand(plugin, previewOffer.commandId);
+                }}
+                onDismiss={() =>
+                  setDismissedOffers((prev) => ({
+                    ...prev,
+                    [activeId]: previewOffer.kind,
+                  }))
+                }
+              />
+            ) : null}
+            <div
+              className={
+                "editor-split" +
+                (activePreview
+                  ? previewLayout === "full"
+                    ? " is-full-preview"
+                    : " is-split"
+                  : "")
               }
-            }}
-            options={{
-              fontFamily:
-                "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
-              fontSize,
-              minimap: { enabled: true },
-              lineNumbers: "on",
-              wordWrap: wordWrap ? "on" : "off",
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              renderWhitespace: "selection",
-              tabSize: 4,
-              smoothScrolling: true,
-              cursorBlinking: "smooth",
-              cursorSmoothCaretAnimation: "on",
-            }}
-          />
+            >
+              {!(activePreview && previewLayout === "full") ? (
+                <div className="editor-half">
+                  <Editor
+                    path={tabModelPath(active?.id ?? "none")}
+                    keepCurrentModel
+                    height="100%"
+                    theme={monacoThemeName}
+                    language={monacoForLanguage(active?.language ?? "normal")}
+                    value={active?.content ?? ""}
+                    onMount={onMount}
+                    onChange={(value) => {
+                      const text = value ?? "";
+                      updateActive({ content: text, dirty: true });
+                      if (typingHandlers.current.size) {
+                        const ev = typingMeter.current.note(text.length);
+                        for (const h of typingHandlers.current.values()) h(ev);
+                      }
+                    }}
+                    options={{
+                      fontFamily:
+                        "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
+                      fontSize,
+                      minimap: { enabled: true },
+                      lineNumbers: "on",
+                      wordWrap: wordWrap ? "on" : "off",
+                      automaticLayout: true,
+                      scrollBeyondLastLine: false,
+                      renderWhitespace: "selection",
+                      tabSize: 4,
+                      smoothScrolling: true,
+                      cursorBlinking: "smooth",
+                      cursorSmoothCaretAnimation: "on",
+                    }}
+                  />
+                </div>
+              ) : null}
+              {activePreview ? (
+                <PreviewPane
+                  title={activePreview.title}
+                  html={activePreview.html}
+                  allowScripts={activePreview.allowScripts}
+                  layout={previewLayout}
+                  onLayout={(layout) =>
+                    setPreviewLayouts((prev) => ({
+                      ...prev,
+                      [activeId]: layout,
+                    }))
+                  }
+                  onRefresh={
+                    activePreview.mode === "markdown"
+                      ? () => {
+                          const raw = active?.content ?? "";
+                          setPreviews((prev) => ({
+                            ...prev,
+                            [activeId]: {
+                              ...activePreview,
+                              html: buildMarkdownPreviewHtml(raw),
+                            },
+                          }));
+                        }
+                      : undefined
+                  }
+                  onExportPdf={exportActivePreviewPdf}
+                  onClose={() =>
+                    setPreviews((prev) => {
+                      const next = { ...prev };
+                      delete next[activeId];
+                      return next;
+                    })
+                  }
+                />
+              ) : null}
+            </div>
+          </>
         )}
       </div>
+
+      <FindResults
+        results={results}
+        onGoto={gotoHit}
+        onClose={() => setResults(null)}
+      />
 
       <PluginDocks
         docks={docks}
         onClose={(id) => setDocks((prev) => prev.filter((d) => d.id !== id))}
+      />
+
+      <CompanionBubble
+        companions={companions}
+        onClose={(id) =>
+          setCompanions((prev) => prev.filter((c) => c.id !== id))
+        }
+        onFocusEditor={() => editorRef.current?.focus()}
       />
 
       <StatusBar
@@ -960,6 +1396,50 @@ export default function App() {
         onEncodingChange={(encoding) => updateActive({ encoding })}
         encodings={ENCODINGS}
         path={active?.path ?? null}
+      />
+
+      <AboutDialog
+        open={aboutOpen}
+        onClose={() => setAboutOpen(false)}
+        onCheckUpdates={openUpdateCheck}
+      />
+
+      <UpdateDialog
+        open={updateUi.open}
+        status={updateUi.status}
+        currentVersion={APP_VERSION}
+        latestVersion={updateUi.latestVersion}
+        notes={updateUi.notes}
+        releaseUrl={updateUi.releaseUrl}
+        error={updateUi.error}
+        busy={updateUi.busy}
+        onClose={() => setUpdateUi((u) => ({ ...u, open: false, busy: false }))}
+        onOpenRelease={() => {
+          void (async () => {
+            if (isTauri()) {
+              const { openUrl } = await import("@tauri-apps/plugin-opener");
+              await openUrl(updateUi.releaseUrl);
+            } else {
+              window.open(updateUi.releaseUrl, "_blank");
+            }
+          })();
+        }}
+        onInstall={() => {
+          void (async () => {
+            setUpdateUi((u) => ({ ...u, busy: true }));
+            notify("Downloading update…");
+            const installed = await installAvailableUpdate();
+            if (installed.kind === "error") {
+              setUpdateUi((u) => ({
+                ...u,
+                busy: false,
+                status: "error",
+                error: installed.message,
+              }));
+              notify(`Update failed: ${installed.message}`);
+            }
+          })();
+        }}
       />
 
       <MarketplacePanel

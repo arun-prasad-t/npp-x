@@ -2,18 +2,18 @@
   "schema": "npp-x.plugin/1",
   "id": "community.csv-table",
   "name": "CSV Table View",
-  "author": "community",
+  "author": "npp-x",
   "version": "1.0.0",
-  "description": "Optional: parse CSV/TSV in the active buffer and show a table preview.",
+  "description": "Parse CSV/TSV in the active buffer as a table preview. Enabled by default.",
   "contributes": {
     "commands": [
       {
         "id": "community.csv.table",
-        "title": "CSV: Table Preview"
+        "title": "Table Preview"
       },
       {
         "id": "community.csv.tableClose",
-        "title": "CSV: Close Preview"
+        "title": "Close Preview"
       }
     ],
     "menus": {

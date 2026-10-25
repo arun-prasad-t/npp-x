@@ -50,6 +50,7 @@ export const TOP_MENUS: TopMenu[] = [
       item("IDM_FILE_RESTORELASTCLOSEDFILE", "Restore Recent Closed File"),
       sep(),
       item("IDM_FILE_PRINT", "Print..."),
+      { kind: "item", id: -1050, label: "Export Preview as PDF…" },
       sep(),
       item("IDM_FILE_EXIT", "Exit"),
     ],
@@ -144,11 +145,15 @@ export const TOP_MENUS: TopMenu[] = [
         ],
       },
       sep(),
+      { kind: "item", id: -1001, label: "Theme Store…" },
+    ],
+  },
+  {
+    label: "Diff",
+    items: [
       { kind: "item", id: -1020, label: "Compare Tabs…" },
       { kind: "item", id: -1021, label: "Compare with Clipboard" },
-      { kind: "item", id: -1022, label: "Exit Diff" },
-      sep(),
-      { kind: "item", id: -1001, label: "Theme Store…" },
+      { kind: "item", id: -1022, label: "Close Diff Tab" },
     ],
   },
   {
@@ -263,6 +268,7 @@ export const TOP_MENUS: TopMenu[] = [
       { kind: "item", id: -1040, label: "Check for Updates…" },
       { kind: "item", id: -1041, label: "Download desktop…" },
       sep(),
+      { kind: "item", id: -1051, label: "File types & default app…" },
       item("IDM_ABOUT", "About npp-x…"),
     ],
   },
@@ -283,4 +289,6 @@ export const NPPX = {
   REMEMBER_SESSION: -1030,
   CHECK_UPDATES: -1040,
   DOWNLOAD_DESKTOP: -1041,
+  EXPORT_PREVIEW_PDF: -1050,
+  FILE_TYPES_HELP: -1051,
 } as const;

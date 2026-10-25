@@ -2,11 +2,11 @@
 
 > Overrides `MASTER.md` for the Cloudflare Pages / browser-host entry dialog only.
 
-**Route / surface:** First visit on non-Tauri hosts; Help → Download desktop…
+**Route / surface:** First visit dialog + always-on download strip above the menu bar; Help → Download desktop…
 
 ## Purpose
 
-Brand-first try-before-download gate. Product opens immediately behind a small dialog — not a separate marketing landing.
+Brand-first try-before-download. Always-visible light bar for Download; one-shot Online mode dialog on first visit. Not a separate marketing landing.
 
 ## Layout
 

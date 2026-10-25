@@ -22,6 +22,13 @@ export type PluginPackage = {
 export type PreviewPayload = {
   title: string;
   html: string;
+  /** Markdown/Mermaid and similar need scripts inside the preview iframe. */
+  allowScripts?: boolean;
+  /**
+   * When `"markdown"`, the host turns `html` (raw markdown source) into a
+   * Mermaid-capable preview document before showing it.
+   */
+  mode?: "html" | "markdown";
 };
 
 export type BottomDockPayload = {
@@ -52,14 +59,38 @@ export type PluginHostApi = {
   /** Sandboxed HTML preview pane (optional plugins: HTML design, CSV tables, …). */
   openPreview: (payload: PreviewPayload) => void;
   closePreview: () => void;
-  /** Bottom companion panel while editing (YouTube, Type Runner, …). */
+  /** Bottom companion panel while editing (YouTube, …). */
   openBottomDock: (payload: BottomDockPayload) => void;
   updateBottomDock: (
     id: string,
     patch: Partial<Omit<BottomDockPayload, "id">>,
   ) => void;
   closeBottomDock: (id?: string) => void;
-  /** Fires on editor edits; return unsubscribe. Cleared when plugins rewire. */
+  /** Clippy-style floating buddy / corner PiP (small widget, not a footer dock). */
+  openCompanion: (payload: {
+    id: string;
+    html: string;
+    speech?: string;
+    state?: Record<string, unknown>;
+    width?: number;
+    height?: number;
+    /** YouTube / nested media embeds. */
+    allowMedia?: boolean;
+  }) => void;
+  /** `state` is delivered to the buddy's iframe via postMessage (no reload). */
+  updateCompanion: (
+    id: string,
+    patch: {
+      html?: string;
+      speech?: string;
+      state?: Record<string, unknown>;
+      width?: number;
+      height?: number;
+      allowMedia?: boolean;
+    },
+  ) => void;
+  closeCompanion: (id?: string) => void;
+  /** Fires on every edit. One listener per plugin — calling again replaces it. */
   onTyping: (handler: (ev: TypingEvent) => void) => () => void;
   registerCommand: (id: string, handler: () => void | Promise<void>) => void;
 };

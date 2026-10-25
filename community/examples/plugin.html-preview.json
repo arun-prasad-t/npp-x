@@ -2,18 +2,18 @@
   "schema": "npp-x.plugin/1",
   "id": "community.html-preview",
   "name": "HTML Preview",
-  "author": "community",
+  "author": "npp-x",
   "version": "1.0.0",
-  "description": "Optional: render the active buffer as HTML (sandboxed preview, CSS ok, scripts blocked).",
+  "description": "Render the active buffer as HTML (sandboxed preview, CSS ok, scripts blocked). Enabled by default.",
   "contributes": {
     "commands": [
       {
         "id": "community.html.preview",
-        "title": "HTML: Preview"
+        "title": "Preview"
       },
       {
         "id": "community.html.previewClose",
-        "title": "HTML: Close Preview"
+        "title": "Close Preview"
       }
     ],
     "menus": {
