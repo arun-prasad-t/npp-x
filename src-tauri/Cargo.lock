@@ -2340,7 +2340,7 @@ dependencies = [
 
 [[package]]
 name = "npp-x"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "objc2",
  "objc2-app-kit",

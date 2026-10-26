@@ -12,6 +12,7 @@ function isMacTauri(): boolean {
   return isTauri() && /Mac/i.test(navigator.userAgent || navigator.platform || "");
 }
 
+/** Applied for browser print (@media print). */
 const PRINT_CSS = `<style id="nppx-print">
 @media print {
   body { background: #fff !important; color: #0f172a !important; }
@@ -23,19 +24,58 @@ const PRINT_CSS = `<style id="nppx-print">
 @page { margin: 12mm; }
 </style>`;
 
-export function prepareHtmlForPdf(html: string): string {
+/**
+ * Forced light ink for macOS WKWebView print-to-PDF — that path often ignores
+ * @media print, so dark CSS variables become white-on-white blank pages.
+ */
+const NATIVE_PDF_CSS = `<style id="nppx-print-native">
+html, body {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+a { color: #15803d !important; }
+.meta, .companion-close, .preview-toolbar { display: none !important; }
+code, pre, th { background: #f1f5f9 !important; color: #0f172a !important; }
+pre, table, th, td, h1, h2, hr, .mermaid {
+  border-color: #cbd5e1 !important;
+}
+.mermaid { background: #ffffff !important; }
+blockquote { color: #475569 !important; }
+img { max-width: 100% !important; }
+@media print {
+  body { background: #fff !important; color: #0f172a !important; }
+}
+@page { margin: 12mm; }
+</style>`;
+
+function injectHeadCss(html: string, css: string, markerId: string): string {
   const trimmed = html.trim();
+  if (new RegExp(`id=["']${markerId}["']`).test(trimmed)) return trimmed;
   if (/<html[\s>]/i.test(trimmed)) {
-    if (/id=["']nppx-print["']/.test(trimmed)) return trimmed;
     if (/<\/head>/i.test(trimmed)) {
-      return trimmed.replace(/<\/head>/i, `${PRINT_CSS}</head>`);
+      return trimmed.replace(/<\/head>/i, `${css}</head>`);
     }
     return trimmed.replace(
       /<html([^>]*)>/i,
-      `<html$1><head><meta charset="utf-8"/>${PRINT_CSS}</head>`,
+      `<html$1><head><meta charset="utf-8"/>${css}</head>`,
     );
   }
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/>${PRINT_CSS}</head><body>${trimmed}</body></html>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"/>${css}</head><body>${trimmed}</body></html>`;
+}
+
+export function prepareHtmlForPdf(html: string): string {
+  return injectHeadCss(html, PRINT_CSS, "nppx-print");
+}
+
+/** macOS native exporter — always force light readable ink. */
+export function prepareHtmlForNativePdf(html: string): string {
+  return injectHeadCss(
+    prepareHtmlForPdf(html),
+    NATIVE_PDF_CSS,
+    "nppx-print-native",
+  );
 }
 
 export type PdfExportResult = "ok" | "blocked" | "error" | "cancelled";
@@ -106,12 +146,13 @@ async function exportViaIframe(
 }
 
 /** macOS: save dialog + native print-to-PDF. */
-async function exportViaMacNative(doc: string): Promise<PdfExportResult> {
+async function exportViaMacNative(html: string): Promise<PdfExportResult> {
   const path = await save({
     defaultPath: "npp-x-preview.pdf",
     filters: [{ name: "PDF", extensions: ["pdf"] }],
   });
   if (!path) return "cancelled";
+  const doc = prepareHtmlForNativePdf(html);
   await invoke("export_html_to_pdf", { html: doc, path });
   return "ok";
 }
@@ -121,19 +162,19 @@ export async function exportHtmlAsPdf(
   html: string,
   opts?: { /** Extra wait for Mermaid CDN / images */ waitMs?: number },
 ): Promise<PdfExportResult> {
-  const doc = prepareHtmlForPdf(html);
   const needsDiagrams =
-    /mermaid|cdn\.jsdelivr\.net\/npm\/mermaid/i.test(doc);
+    /mermaid|cdn\.jsdelivr\.net\/npm\/mermaid/i.test(html);
   const waitMs = opts?.waitMs ?? (needsDiagrams ? 2400 : 350);
 
   if (isMacTauri()) {
     try {
-      return await exportViaMacNative(doc);
+      // Pass raw preview HTML — native path adds forced light print CSS.
+      return await exportViaMacNative(html);
     } catch (err) {
       console.error("Native PDF export failed", err);
       return "error";
     }
   }
 
-  return exportViaIframe(doc, waitMs);
+  return exportViaIframe(prepareHtmlForPdf(html), waitMs);
 }

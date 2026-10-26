@@ -1,10 +1,11 @@
-## npp-x 0.1.9
+## npp-x 0.1.10
 
 ### Fixes
-- **macOS Export PDF** — JS `print()` is a no-op in WKWebView; desktop now uses a native Save dialog + AppKit print-to-PDF so a real `.pdf` file is written
+- **macOS ⌘Q** — Quit the app (N++ Ctrl+Q comment no longer steals it); comment is **⌃Q**
+- **macOS Export PDF** — Wait for WKWebView load, force light print CSS, avoid blank white pages
 
-### From 0.1.8
-- Preview Light / Dark toggle · workers.dev asset deploy · download welcome every visit
+### From 0.1.9
+- Native Save dialog + AppKit print-to-PDF for Export Preview
 
 ### Downloads
 | Platform | Asset |

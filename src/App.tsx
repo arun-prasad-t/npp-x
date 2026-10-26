@@ -971,7 +971,15 @@ export default function App() {
           setTabs([blank]);
           setActiveId(blank.id);
         },
-        exit: () => window.close(),
+        exit: () => {
+          if (isTauri()) {
+            void import("@tauri-apps/plugin-process")
+              .then(({ exit }) => exit(0))
+              .catch(() => window.close());
+            return;
+          }
+          window.close();
+        },
         find: () => openFind("find"),
         findNext: () => findNext(false),
         findPrev: () => findNext(true),

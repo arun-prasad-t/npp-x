@@ -1,8 +1,13 @@
 //! Desktop PDF export.
 //!
-//! On macOS, WKWebView's JavaScript `window.print()` is a silent no-op (wry only
-//! shims print for WebView2). We render the HTML in an off-screen WKWebView and
-//! drive AppKit's print-to-PDF (`NSPrintSaveJob`) instead.
+//! On macOS, WKWebView's JavaScript `window.print()` is a silent no-op. We render
+//! HTML in a WKWebView and drive AppKit print-to-PDF (`NSPrintSaveJob`).
+//!
+//! Empty/white PDFs usually come from: printing before load finishes, vertically
+//! centered empty pages, off-screen views that never paint, or dark CSS vars
+//! with no `@media print` application. This path waits for `isLoading == false`,
+//! disables centering, keeps a near-invisible on-screen window, and expects the
+//! HTML to already carry forced light print colors.
 
 use tauri::AppHandle;
 
@@ -37,9 +42,9 @@ mod macos {
         while start.elapsed() < timeout {
             if let Ok(meta) = fs::metadata(path) {
                 let len = meta.len();
-                if len > 0 && len == last_size {
+                if len > 64 && len == last_size {
                     stable += 1;
-                    if stable >= 3 {
+                    if stable >= 4 {
                         return Ok(());
                     }
                 } else {
@@ -49,10 +54,25 @@ mod macos {
             }
             spin_runloop(0.1);
         }
-        if path.is_file() && fs::metadata(path).map(|m| m.len()).unwrap_or(0) > 0 {
+        if path.is_file() && fs::metadata(path).map(|m| m.len()).unwrap_or(0) > 64 {
             Ok(())
         } else {
             Err("Timed out waiting for PDF file".into())
+        }
+    }
+
+    fn wait_until_loaded(webview: &WKWebView, timeout: Duration) {
+        let start = Instant::now();
+        while start.elapsed() < timeout {
+            let loading = unsafe { webview.isLoading() };
+            if !loading {
+                // One more turn for layout / fonts / late paints.
+                spin_runloop(0.15);
+                if !unsafe { webview.isLoading() } {
+                    return;
+                }
+            }
+            spin_runloop(0.05);
         }
     }
 
@@ -68,13 +88,12 @@ mod macos {
                 let mtm = MainThreadMarker::new()
                     .ok_or_else(|| "PDF export must run on the main thread".to_string())?;
 
-                let tmp_dir = std::env::temp_dir().join("npp-x-pdf");
-                fs::create_dir_all(&tmp_dir).map_err(|e| e.to_string())?;
-                let html_path = tmp_dir.join(format!("export-{}.html", std::process::id()));
-                fs::write(&html_path, html.as_bytes()).map_err(|e| e.to_string())?;
-
-                let frame = CGRect::new(CGPoint::new(-2400.0, -2400.0), CGSize::new(900.0, 1200.0));
-                let content = CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(900.0, 1200.0));
+                // On-screen but nearly invisible — far-offscreen windows often
+                // print as blank white pages on WKWebView.
+                let page_w = 794.0; // ~A4 at 96dpi
+                let page_h = 1123.0;
+                let frame = CGRect::new(CGPoint::new(40.0, 40.0), CGSize::new(page_w, page_h));
+                let content = CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(page_w, page_h));
 
                 let window: Retained<NSWindow> = unsafe {
                     NSWindow::initWithContentRect_styleMask_backing_defer(
@@ -87,6 +106,8 @@ mod macos {
                 };
                 window.setTitle(&NSString::from_str("npp-x Export PDF"));
                 unsafe { window.setReleasedWhenClosed(false) };
+                window.setAlphaValue(0.02);
+                window.orderFrontRegardless();
 
                 let config = unsafe { WKWebViewConfiguration::new(mtm) };
                 let webview = unsafe {
@@ -97,33 +118,45 @@ mod macos {
                     )
                 };
                 window.setContentView(Some(&*webview));
-                window.orderBack(None);
 
-                let html_ns = NSString::from_str(&html_path.to_string_lossy());
-                let dir_ns = NSString::from_str(&tmp_dir.to_string_lossy());
-                let file_url = NSURL::fileURLWithPath(&html_ns);
-                let dir_url = NSURL::fileURLWithPath(&dir_ns);
+                // Prefer loadHTMLString with an https base so Mermaid/marked
+                // CDN modules resolve (file:// often blocks them → empty page).
+                let html_ns = NSString::from_str(&html);
+                let base = NSURL::URLWithString(&NSString::from_str("https://cdn.jsdelivr.net/"))
+                    .ok_or_else(|| "Invalid base URL".to_string())?;
                 unsafe {
-                    webview.loadFileURL_allowingReadAccessToURL(&file_url, &dir_url);
+                    webview.loadHTMLString_baseURL(&html_ns, Some(&base));
                 }
 
-                // Allow HTML + Mermaid CDN to settle before printing.
-                let wait_ms = if html.contains("mermaid") { 2800 } else { 700 };
+                wait_until_loaded(&webview, Duration::from_secs(20));
+                // Mermaid / late layout
+                let extra = if html.contains("mermaid") { 3.0 } else { 0.8 };
                 let start = Instant::now();
-                while start.elapsed() < Duration::from_millis(wait_ms) {
+                while start.elapsed() < Duration::from_secs_f64(extra) {
                     spin_runloop(0.05);
                 }
 
+                // Tall frame so content below the first viewport is still painted.
+                let tall = CGSize::new(page_w, page_h * 8.0);
+                window.setContentSize(tall);
+                webview.setFrame(CGRect::new(CGPoint::new(0.0, 0.0), tall));
+                spin_runloop(0.2);
+
                 let print_info = NSPrintInfo::sharedPrintInfo();
+                // Centering empty/short content produces blank white pages.
+                print_info.setHorizontallyCentered(false);
+                print_info.setVerticallyCentered(false);
                 print_info.setHorizontalPagination(NSPrintingPaginationMode::Automatic);
                 print_info.setVerticalPagination(NSPrintingPaginationMode::Automatic);
-                print_info.setTopMargin(36.0);
-                print_info.setBottomMargin(36.0);
-                print_info.setLeftMargin(36.0);
-                print_info.setRightMargin(36.0);
+                print_info.setTopMargin(28.0);
+                print_info.setBottomMargin(28.0);
+                print_info.setLeftMargin(28.0);
+                print_info.setRightMargin(28.0);
 
                 let pdf_ns = NSString::from_str(&pdf_path);
                 let pdf_url = NSURL::fileURLWithPath(&pdf_ns);
+                // Remove any previous attempt so wait_for_pdf doesn't succeed early.
+                let _ = fs::remove_file(&pdf_path);
                 unsafe {
                     print_info.setJobDisposition(NSPrintSaveJob);
                     let dict = print_info.dictionary();
@@ -133,15 +166,23 @@ mod macos {
                 let op: Retained<NSPrintOperation> =
                     unsafe { webview.printOperationWithPrintInfo(&print_info) };
                 op.setShowsPrintPanel(false);
-                op.setShowsProgressPanel(true);
+                op.setShowsProgressPanel(false);
                 op.setJobTitle(Some(&NSString::from_str("npp-x Preview")));
+                op.setCanSpawnSeparateThread(false);
 
-                // Save-to-URL job (no print panel). WKWebView may finish async —
-                // wait for the PDF bytes on disk instead of trusting the bool.
-                let _started = op.runOperation();
-                spin_runloop(0.25);
-                wait_for_pdf(Path::new(&pdf_path), Duration::from_secs(45))?;
-                let _ = fs::remove_file(&html_path);
+                let _ok = op.runOperation();
+                spin_runloop(0.3);
+                wait_for_pdf(Path::new(&pdf_path), Duration::from_secs(60))?;
+
+                // Reject tiny "empty" PDFs (headers only / blank pages).
+                let len = fs::metadata(&pdf_path).map(|m| m.len()).unwrap_or(0);
+                if len < 800 {
+                    let _ = fs::remove_file(&pdf_path);
+                    return Err(format!(
+                        "PDF looks empty ({len} bytes). Preview may still be loading — try again."
+                    ));
+                }
+
                 window.close();
                 Ok(())
             })();

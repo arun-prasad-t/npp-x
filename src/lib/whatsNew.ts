@@ -7,7 +7,8 @@ import { APP_VERSION } from "./appVersion";
 export const WHATS_NEW = `## npp-x ${APP_VERSION}
 
 ### Fixes
-- **macOS Export PDF** — Save dialog + native print-to-PDF (WKWebView cannot use window.print)
+- **macOS ⌘Q** quits (comment is ⌃Q) — no longer toggles comment
+- **macOS Export PDF** — wait for load + light print CSS (fewer blank pages)
 
 ### Still with you
 - Preview Light/Dark · Find & Replace · Diff · HTML/CSV/Markdown+Mermaid · workers.dev demo
