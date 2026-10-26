@@ -14,7 +14,7 @@ mod macos {
     use std::time::{Duration, Instant};
 
     use objc2::rc::Retained;
-    use objc2::MainThreadMarker;
+    use objc2::{MainThreadMarker, MainThreadOnly};
     use objc2_app_kit::{
         NSBackingStoreType, NSPrintInfo, NSPrintJobSavingURL, NSPrintOperation, NSPrintSaveJob,
         NSPrintingPaginationMode, NSWindow, NSWindowStyleMask,
@@ -27,7 +27,7 @@ mod macos {
     fn spin_runloop(seconds: f64) {
         let rl = NSRunLoop::currentRunLoop();
         let until = NSDate::dateWithTimeIntervalSinceNow(seconds);
-        rl.runUntilDate(Some(&until));
+        rl.runUntilDate(&until);
     }
 
     fn wait_for_pdf(path: &Path, timeout: Duration) -> Result<(), String> {
@@ -86,6 +86,7 @@ mod macos {
                     )
                 };
                 window.setTitle(&NSString::from_str("npp-x Export PDF"));
+                unsafe { window.setReleasedWhenClosed(false) };
 
                 let config = unsafe { WKWebViewConfiguration::new(mtm) };
                 let webview = unsafe {
