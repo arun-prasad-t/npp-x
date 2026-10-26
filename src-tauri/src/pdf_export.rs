@@ -101,8 +101,8 @@ mod macos {
 
                 let html_ns = NSString::from_str(&html_path.to_string_lossy());
                 let dir_ns = NSString::from_str(&tmp_dir.to_string_lossy());
-                let file_url = unsafe { NSURL::fileURLWithPath(&html_ns) };
-                let dir_url = unsafe { NSURL::fileURLWithPath(&dir_ns) };
+                let file_url = NSURL::fileURLWithPath(&html_ns);
+                let dir_url = NSURL::fileURLWithPath(&dir_ns);
                 unsafe {
                     webview.loadFileURL_allowingReadAccessToURL(&file_url, &dir_url);
                 }
@@ -115,7 +115,6 @@ mod macos {
                 }
 
                 let print_info = NSPrintInfo::sharedPrintInfo();
-                print_info.setJobDisposition(NSPrintSaveJob);
                 print_info.setHorizontalPagination(NSPrintingPaginationMode::Automatic);
                 print_info.setVerticalPagination(NSPrintingPaginationMode::Automatic);
                 print_info.setTopMargin(36.0);
@@ -124,8 +123,9 @@ mod macos {
                 print_info.setRightMargin(36.0);
 
                 let pdf_ns = NSString::from_str(&pdf_path);
-                let pdf_url = unsafe { NSURL::fileURLWithPath(&pdf_ns) };
+                let pdf_url = NSURL::fileURLWithPath(&pdf_ns);
                 unsafe {
+                    print_info.setJobDisposition(NSPrintSaveJob);
                     let dict = print_info.dictionary();
                     dict.insert(NSPrintJobSavingURL, &*pdf_url);
                 }
