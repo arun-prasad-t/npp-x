@@ -714,13 +714,21 @@ export default function App() {
         notify("Open an HTML, CSV, or Markdown preview first");
         return;
       }
-      notify("Opening print dialog — choose Save as PDF");
       const scheme =
         previewSchemes[activeIdRef.current] ?? resolveAppPreviewScheme();
+      notify(
+        isTauri()
+          ? "Saving PDF…"
+          : "Opening print dialog — choose Save as PDF",
+      );
       const result = await exportHtmlAsPdf(
         withPreviewScheme(preview.html, scheme),
       );
-      if (result === "blocked" || result === "error") {
+      if (result === "ok") {
+        notify("PDF export ready");
+      } else if (result === "cancelled") {
+        notify("PDF export cancelled");
+      } else if (result === "blocked" || result === "error") {
         notify("PDF export failed — try File → Export Preview as PDF again");
       }
     })();

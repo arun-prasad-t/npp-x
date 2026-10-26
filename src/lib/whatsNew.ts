@@ -6,18 +6,14 @@ import { APP_VERSION } from "./appVersion";
  */
 export const WHATS_NEW = `## npp-x ${APP_VERSION}
 
-### Previews
-- **Light / Dark toggle** — follows your npp-x theme by default (no forced dark iframe)
-
 ### Fixes
-- **Export PDF** on desktop (no pop-up blocker)
-- Live site at https://npp-x.npp-x.workers.dev actually updates on deploy
+- **macOS Export PDF** — Save dialog + native print-to-PDF (WKWebView cannot use window.print)
 
 ### Still with you
-- Find & Replace · Diff tabs · HTML / CSV / Markdown+Mermaid · Export PDF · Open-with
+- Preview Light/Dark · Find & Replace · Diff · HTML/CSV/Markdown+Mermaid · workers.dev demo
 
 ### macOS (Gatekeeper)
-Builds are **ad-hoc signed**. Use **Open-npp-x.command** from the release, or:
+Use **Open-npp-x.command**, or:
 \`xattr -cr /Applications/npp-x.app && open /Applications/npp-x.app\`
 
 Guide: https://github.com/arun-prasad-t/npp-x/blob/main/docs/MACOS-OPEN.md

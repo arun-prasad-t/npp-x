@@ -1,6 +1,6 @@
 [package]
 name = "npp-x"
-version = "0.1.8"
+version = "0.1.9"
 description = "Cross-platform Notepad++-inspired editor (Tauri + Rust)"
 authors = ["npp-x"]
 edition = "2021"
@@ -31,3 +31,11 @@ strip = true
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-process = "2.4.0"
 tauri-plugin-updater = "2.14.0"
+
+# macOS: WKWebView JS print() is a no-op — native print-to-PDF instead.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSString", "NSURL", "NSDate", "NSRunLoop", "NSDictionary", "NSGeometry", "NSObject", "NSEnumerator"] }
+objc2-app-kit = { version = "0.3", features = ["NSWindow", "NSView", "NSPrintInfo", "NSPrintOperation", "NSGraphics"] }
+objc2-web-kit = { version = "0.3", features = ["WKWebView", "WKWebViewConfiguration", "WKNavigation"] }
+objc2-core-foundation = "0.3"

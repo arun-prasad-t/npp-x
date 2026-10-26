@@ -78,7 +78,7 @@ export function PreviewPane({
             <button
               type="button"
               className="primary"
-              title="Opens the print dialog — choose Save as PDF"
+              title="Save preview as PDF (macOS: save dialog; others: print → Save as PDF)"
               onClick={onExportPdf}
             >
               Export PDF

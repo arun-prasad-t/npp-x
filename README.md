@@ -94,11 +94,10 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 | **Optional fun plugins** | YouTube corner PiP + Type Runner buddy (draggable; off by default). |
 | **2026 chrome** | Dense slate IDE UI, Plus Jakarta Sans, run-green accent, click-stable menus. |
 
-### What’s new in 0.1.8
+### What’s new in 0.1.9
 
-- Preview **Light / Dark** toggle (follows npp-x theme by default)
-- Desktop **Export PDF** (no pop-up blocker); live site URL **npp-x.npp-x.workers.dev**
-- Worker asset deploy fixed so Cloudflare builds actually ship the new UI
+- **macOS Export PDF** works via Save dialog + native print-to-PDF (WKWebView can’t use `window.print`)
+- From 0.1.8: preview Light/Dark, workers.dev deploy fix, download welcome every visit
 
 Full notes: [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md).
 

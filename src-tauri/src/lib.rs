@@ -1,3 +1,5 @@
+mod pdf_export;
+
 use serde::Serialize;
 use std::fs;
 use std::path::PathBuf;
@@ -106,7 +108,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             read_text_file,
             write_text_file,
-            take_pending_files
+            take_pending_files,
+            pdf_export::export_html_to_pdf
         ])
         .build(tauri::generate_context!())
         .expect("error while building npp-x")
