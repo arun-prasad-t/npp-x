@@ -86,7 +86,7 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 | **Find & Replace** | N++-grade: Normal / Extended / Regex, Count, Find All, Mark, Replace All in open docs. |
 | **Diff tabs** | Top **Diff** menu → Compare Tabs or Clipboard — opens a real tab, not a stuck overlay. |
 | **HTML / CSV / Markdown preview** | On by default. **Split** with the editor first; **Full** when you want. Mermaid in Markdown. |
-| **Export PDF** | From any preview (HTML, CSV table, MD + diagrams) — print dialog → Save as PDF. No extra apps. |
+| **Export PDF** | From any preview (HTML, CSV table, MD + diagrams). macOS writes a PDF after the save dialog; other platforms use the print dialog → Save as PDF. |
 | **Quick preview** | Paste HTML / MD / CSV into a buffer → one-click **Open preview** chip. |
 | **Open with npp-x** | Desktop registers `.txt` `.csv` `.html` `.md` — make it your default opener in the OS. |
 | **Theme & Plugin stores** | Install from **file or git URL** in one click. |
@@ -96,7 +96,7 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 
 ### What’s new in 0.1.10
 
-- **macOS ⌘Q** quits (comment is ⌃Q); Export PDF waits for load to reduce blank pages
+- **macOS ⌘Q** quits (comment is ⌃Q); Export PDF saves a file without the print dialog (that dialog freezes WKWebView)
 - From 0.1.9: native Save dialog + AppKit print-to-PDF for Export Preview
 
 Full notes: [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md).

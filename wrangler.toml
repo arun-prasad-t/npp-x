@@ -7,3 +7,7 @@ compatibility_date = "2026-10-25"
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
+
+# Workers Builds runs `npx wrangler preview` off main. Empty is valid;
+# assets and compatibility stay above. https://developers.cloudflare.com/workers/previews/configuration/
+[previews]

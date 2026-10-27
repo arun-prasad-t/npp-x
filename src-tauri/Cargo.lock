@@ -2342,6 +2342,7 @@ dependencies = [
 name = "npp-x"
 version = "0.1.10"
 dependencies = [
+ "block2",
  "objc2",
  "objc2-app-kit",
  "objc2-core-foundation",

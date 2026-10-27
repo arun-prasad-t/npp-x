@@ -1,7 +1,7 @@
 /**
  * Export preview HTML as PDF.
  * - Browser / Windows / Linux: system print dialog via a hidden iframe.
- * - macOS desktop: native WKWebView print-to-PDF (JS window.print is a no-op there).
+ * - macOS desktop: WKWebView createPDF (window.print and AppKit print both hang).
  */
 
 import { invoke } from "@tauri-apps/api/core";
@@ -32,8 +32,13 @@ const NATIVE_PDF_CSS = `<style id="nppx-print-native">
 html, body {
   background: #ffffff !important;
   color: #0f172a !important;
+  margin: 0 !important;
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
+}
+body {
+  padding: 28px !important;
+  box-sizing: border-box !important;
 }
 a { color: #15803d !important; }
 .meta, .companion-close, .preview-toolbar { display: none !important; }
@@ -78,7 +83,24 @@ export function prepareHtmlForNativePdf(html: string): string {
   );
 }
 
-export type PdfExportResult = "ok" | "blocked" | "error" | "cancelled";
+export type PdfExportResult =
+  | "ok"
+  | "saved"
+  | "blocked"
+  | "cancelled"
+  | { error: string };
+
+let exportInFlight = false;
+
+function describeError(err: unknown): string {
+  const raw =
+    typeof err === "string"
+      ? err
+      : err instanceof Error
+        ? err.message
+        : "PDF export failed";
+  return raw.length > 180 ? `${raw.slice(0, 180)}…` : raw;
+}
 
 function waitForFrame(win: Window, waitMs: number): Promise<void> {
   return new Promise((resolve) => {
@@ -139,9 +161,9 @@ async function exportViaIframe(
     win.print();
     window.setTimeout(cleanup, 60_000);
     return "ok";
-  } catch {
+  } catch (err) {
     cleanup();
-    return "error";
+    return { error: describeError(err) };
   }
 }
 
@@ -154,7 +176,7 @@ async function exportViaMacNative(html: string): Promise<PdfExportResult> {
   if (!path) return "cancelled";
   const doc = prepareHtmlForNativePdf(html);
   await invoke("export_html_to_pdf", { html: doc, path });
-  return "ok";
+  return "saved";
 }
 
 /** Open print / save-PDF for the prepared HTML. */
@@ -162,19 +184,26 @@ export async function exportHtmlAsPdf(
   html: string,
   opts?: { /** Extra wait for Mermaid CDN / images */ waitMs?: number },
 ): Promise<PdfExportResult> {
-  const needsDiagrams =
-    /mermaid|cdn\.jsdelivr\.net\/npm\/mermaid/i.test(html);
-  const waitMs = opts?.waitMs ?? (needsDiagrams ? 2400 : 350);
+  if (exportInFlight) return "blocked";
+  exportInFlight = true;
+  try {
+    const needsDiagrams =
+      /mermaid|cdn\.jsdelivr\.net\/npm\/mermaid/i.test(html);
+    const waitMs = opts?.waitMs ?? (needsDiagrams ? 2400 : 350);
 
-  if (isMacTauri()) {
-    try {
-      // Pass raw preview HTML — native path adds forced light print CSS.
-      return await exportViaMacNative(html);
-    } catch (err) {
-      console.error("Native PDF export failed", err);
-      return "error";
+    if (isMacTauri()) {
+      try {
+        // Pass raw preview HTML — native path adds forced light print CSS.
+        // Never fall back to window.print() here: on WKWebView that call hangs the app.
+        return await exportViaMacNative(html);
+      } catch (err) {
+        console.error("Native PDF export failed", err);
+        return { error: describeError(err) };
+      }
     }
-  }
 
-  return exportViaIframe(prepareHtmlForPdf(html), waitMs);
+    return exportViaIframe(prepareHtmlForPdf(html), waitMs);
+  } finally {
+    exportInFlight = false;
+  }
 }

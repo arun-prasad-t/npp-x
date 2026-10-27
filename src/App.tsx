@@ -724,12 +724,16 @@ export default function App() {
       const result = await exportHtmlAsPdf(
         withPreviewScheme(preview.html, scheme),
       );
-      if (result === "ok") {
+      if (result === "saved") {
+        notify("PDF saved");
+      } else if (result === "ok") {
         notify("PDF export ready");
       } else if (result === "cancelled") {
         notify("PDF export cancelled");
-      } else if (result === "blocked" || result === "error") {
-        notify("PDF export failed — try File → Export Preview as PDF again");
+      } else if (result === "blocked") {
+        notify("PDF export is already running");
+      } else {
+        notify(`PDF export failed: ${result.error}`);
       }
     })();
   };
