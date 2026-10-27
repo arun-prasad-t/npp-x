@@ -32,10 +32,12 @@ strip = true
 tauri-plugin-process = "2.4.0"
 tauri-plugin-updater = "2.14.0"
 
-# macOS: WKWebView JS print() is a no-op — native print-to-PDF instead.
+# macOS: WKWebView JS print() is a no-op, and NSPrintOperation.runOperation
+# freezes the process. Export uses WKWebView.createPDF instead.
 [target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6"
 objc2 = "0.6"
-objc2-foundation = { version = "0.3", features = ["NSString", "NSURL", "NSDate", "NSRunLoop", "NSDictionary", "NSGeometry", "NSObject", "NSEnumerator"] }
-objc2-app-kit = { version = "0.3", features = ["NSWindow", "NSView", "NSPrintInfo", "NSPrintOperation", "NSGraphics"] }
-objc2-web-kit = { version = "0.3", features = ["WKWebView", "WKWebViewConfiguration", "WKNavigation"] }
+objc2-foundation = { version = "0.3", features = ["NSString", "NSURL", "NSData", "NSError", "NSValue", "NSObject"] }
+objc2-app-kit = { version = "0.3", features = ["NSWindow", "NSView"] }
+objc2-web-kit = { version = "0.3", features = ["WKWebView", "WKWebViewConfiguration", "WKPDFConfiguration", "block2"] }
 objc2-core-foundation = "0.3"
