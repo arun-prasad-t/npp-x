@@ -87,16 +87,26 @@ jobs:
               fs.writeFileSync(f, JSON.stringify(j, null, 2) + "\n");
             }
             let cargo = fs.readFileSync("src-tauri/Cargo.toml", "utf8");
+            if (!/^version = "[^"]+"/m.test(cargo)) {
+              throw new Error("version field not found in Cargo.toml");
+            }
             cargo = cargo.replace(/^version = "[^"]+"/m, `version = "${ver}"`);
             fs.writeFileSync("src-tauri/Cargo.toml", cargo);
+            // Accept LF or CRLF; skip rewrite when already at target version.
             let lock = fs.readFileSync("src-tauri/Cargo.lock", "utf8");
-            const next = lock.replace(
-              /(\[\[package\]\]\nname = "npp-x"\nversion = ")[^"]+(")/,
-              `$1${ver}$2`,
-            );
-            if (next === lock) throw new Error("npp-x package not found in Cargo.lock");
-            fs.writeFileSync("src-tauri/Cargo.lock", next);
+            const lockRe =
+              /(\[\[package\]\]\r?\nname = "npp-x"\r?\nversion = ")[^"]+(")/;
+            const lockHit = lock.match(lockRe);
+            if (!lockHit) throw new Error("npp-x package not found in Cargo.lock");
+            if (lockHit[0].includes(`version = "${ver}"`)) {
+              console.log("Cargo.lock already at", ver);
+            } else {
+              fs.writeFileSync("src-tauri/Cargo.lock", lock.replace(lockRe, `$1${ver}$2`));
+            }
             let av = fs.readFileSync("src/lib/appVersion.ts", "utf8");
+            if (!/export const APP_VERSION = "[^"]+"/.test(av)) {
+              throw new Error("APP_VERSION not found in appVersion.ts");
+            }
             av = av.replace(
               /export const APP_VERSION = "[^"]+"/,
               `export const APP_VERSION = "${ver}"`,
