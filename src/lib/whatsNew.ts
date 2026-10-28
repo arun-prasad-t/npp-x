@@ -7,8 +7,8 @@ import { APP_VERSION } from "./appVersion";
 export const WHATS_NEW = `## npp-x ${APP_VERSION}
 
 ### Fixes
-- **macOS ⌘Q** quits (comment is ⌃Q) — no longer toggles comment
-- **macOS Export PDF** — wait for load + light print CSS (fewer blank pages)
+- **macOS Export PDF** — export no longer freezes the app
+- **macOS ⌘Q** quits (comment is ⌃Q); blank-page PDF mitigations from 0.1.10
 
 ### Still with you
 - Preview Light/Dark · Find & Replace · Diff · HTML/CSV/Markdown+Mermaid · workers.dev demo

@@ -1,5 +1,5 @@
 /** Keep in sync with package.json / tauri.conf.json on each release. */
-export const APP_VERSION = "0.1.10";
+export const APP_VERSION = "0.1.11";
 
 export const APP_NAME = "npp-x";
 export const LIVE_URL = "https://npp-x.npp-x.workers.dev";

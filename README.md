@@ -94,10 +94,10 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 | **Optional fun plugins** | YouTube corner PiP + Type Runner buddy (draggable; off by default). |
 | **2026 chrome** | Dense slate IDE UI, Plus Jakarta Sans, run-green accent, click-stable menus. |
 
-### What’s new in 0.1.10
+### What’s new in 0.1.11
 
-- **macOS ⌘Q** quits (comment is ⌃Q); Export PDF saves a file without the print dialog (that dialog freezes WKWebView)
-- From 0.1.9: native Save dialog + AppKit print-to-PDF for Export Preview
+- **macOS Export PDF** no longer freezes the app; Release Actions version input syncs the app binary
+- From 0.1.10: ⌘Q quits (⌃Q comments); Export PDF saves without the WKWebView print dialog
 
 Full notes: [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md).
 

@@ -1,6 +1,13 @@
 # Build and publish npp-x installers for major desktop targets.
 # Triggers: tag v*  OR  Actions → Release → Run workflow
 #
+# Version source of truth for a run:
+#   - workflow_dispatch "tag" input (v0.1.11 or 0.1.11), if set
+#   - else the pushed git tag (v*)
+#   - else package.json
+# That version is written into package.json / tauri.conf / Cargo / appVersion
+# before tauri-action builds, so the GitHub tag and the app binary match.
+#
 # macOS signing: tauri.conf.json uses signingIdentity "-" (ad-hoc).
 # Do NOT pass empty APPLE_CERTIFICATE* env vars — Tauri treats them as
 # “use PKCS#12” and the Mac jobs fail with SecKeychainItemImport errors.
@@ -16,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag (e.g. v0.1.1). Leave empty to use package version."
+        description: "Release version/tag (e.g. 0.1.11 or v0.1.11). Leave empty to use package.json."
         required: false
         default: ""
 
@@ -47,6 +54,56 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve & sync app version
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          RAW="${{ github.event.inputs.tag }}"
+          if [ -z "${RAW}" ] && [ "${{ github.ref_type }}" = "tag" ]; then
+            RAW="${{ github.ref_name }}"
+          fi
+          if [ -z "${RAW}" ]; then
+            RAW="$(node -p "require('./package.json').version")"
+          fi
+          VER="${RAW#v}"
+          if ! [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.+-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version: '$RAW' (resolved '$VER')" >&2
+            exit 1
+          fi
+          TAG="v${VER}"
+          echo "version=${VER}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved release: ${TAG} (app will build as ${VER})"
+
+          export VER
+          node -e '
+            const fs = require("fs");
+            const ver = process.env.VER;
+            for (const f of ["package.json", "src-tauri/tauri.conf.json"]) {
+              const j = JSON.parse(fs.readFileSync(f, "utf8"));
+              j.version = ver;
+              fs.writeFileSync(f, JSON.stringify(j, null, 2) + "\n");
+            }
+            let cargo = fs.readFileSync("src-tauri/Cargo.toml", "utf8");
+            cargo = cargo.replace(/^version = "[^"]+"/m, `version = "${ver}"`);
+            fs.writeFileSync("src-tauri/Cargo.toml", cargo);
+            let lock = fs.readFileSync("src-tauri/Cargo.lock", "utf8");
+            const next = lock.replace(
+              /(\[\[package\]\]\nname = "npp-x"\nversion = ")[^"]+(")/,
+              `$1${ver}$2`,
+            );
+            if (next === lock) throw new Error("npp-x package not found in Cargo.lock");
+            fs.writeFileSync("src-tauri/Cargo.lock", next);
+            let av = fs.readFileSync("src/lib/appVersion.ts", "utf8");
+            av = av.replace(
+              /export const APP_VERSION = "[^"]+"/,
+              `export const APP_VERSION = "${ver}"`,
+            );
+            fs.writeFileSync("src/lib/appVersion.ts", av);
+            console.log("Synced package.json, tauri.conf, Cargo, appVersion →", ver);
+          '
 
       - name: Install Linux deps
         if: matrix.platform == 'ubuntu-22.04'
@@ -87,8 +144,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           includeUpdaterJson: true
-          tagName: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || 'v__VERSION__' }}
-          releaseName: "npp-x v__VERSION__"
+          tagName: ${{ steps.ver.outputs.tag }}
+          releaseName: npp-x v${{ steps.ver.outputs.version }}
           releaseBody: |
             Cross-platform Notepad++-inspired editor (Tauri 2 + React + Monaco).
 
@@ -119,11 +176,8 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.ver.outputs.tag }}
         run: |
-          TAG="${{ github.event.inputs.tag }}"
-          if [ -z "$TAG" ]; then
-            TAG="v$(node -p "require('./package.json').version")"
-          fi
           cp scripts/macos-open-npp-x.command Open-npp-x.command
           chmod +x Open-npp-x.command
           # Release may already exist from tauri-action

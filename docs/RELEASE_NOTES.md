@@ -1,11 +1,11 @@
-## npp-x 0.1.10
+## npp-x 0.1.11
 
 ### Fixes
-- **macOS ⌘Q** — Quit the app (N++ Ctrl+Q comment no longer steals it); comment is **⌃Q**
-- **macOS Export PDF** — Wait for WKWebView load, force light print CSS, avoid blank white pages
+- **macOS Export PDF** — Export no longer freezes the app while writing the PDF
+- **Release workflow** — Manual Actions version/tag now rewrites the app version before build (tag and binary match)
 
-### From 0.1.9
-- Native Save dialog + AppKit print-to-PDF for Export Preview
+### From 0.1.10
+- macOS ⌘Q quits (comment is ⌃Q) · PDF load wait / light print CSS
 
 ### Downloads
 | Platform | Asset |

@@ -2340,7 +2340,7 @@ dependencies = [
 
 [[package]]
 name = "npp-x"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "block2",
  "objc2",
