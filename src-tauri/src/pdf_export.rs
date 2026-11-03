@@ -117,6 +117,8 @@ mod macos {
         min_wait: std::time::Duration,
         tx: Sender<Result<(), String>>,
         app: AppHandle,
+        /// Built on the main thread only. PDFDocument is not Send.
+        doc: Retained<PDFDocument>,
     }
 
     thread_local! {
@@ -288,28 +290,51 @@ mod macos {
     /// Slice the tall layout into A4-height pages (createPDF alone yields one
     /// giant page / truncated output for long Markdown).
     fn capture(id: u64, width: f64, height: f64) {
-        let combined = unsafe { PDFDocument::init(PDFDocument::alloc()) };
-        capture_page(id, width, height, 0.0, combined);
+        capture_page(id, width, height, 0.0);
     }
 
-    fn capture_page(
-        id: u64,
-        width: f64,
-        height: f64,
-        y: f64,
-        combined: Retained<PDFDocument>,
-    ) {
+    fn page_bytes(data: *mut NSData, error: *mut NSError) -> Result<Vec<u8>, String> {
+        if !error.is_null() {
+            let message = unsafe { &*error }.localizedDescription().to_string();
+            return Err(format!("PDF export failed: {message}"));
+        }
+        if data.is_null() {
+            return Err("PDF export returned no data.".into());
+        }
+        let bytes = unsafe { &*data }.to_vec();
+        validate_pdf(&bytes)?;
+        Ok(bytes)
+    }
+
+    /// Append one createPDF slice. Must run on the main thread (JOBS + PDFDocument).
+    fn stitch_page(id: u64, bytes: Vec<u8>) -> Result<(), String> {
+        let ns = NSData::from_vec(bytes);
+        let page_doc = unsafe { PDFDocument::initWithData(PDFDocument::alloc(), &ns) }
+            .ok_or_else(|| "Could not parse a PDF page.".to_string())?;
+        let page = unsafe { page_doc.pageAtIndex(0) }
+            .ok_or_else(|| "PDF page was empty.".to_string())?;
+        JOBS.with(|jobs| {
+            let jobs = jobs.borrow();
+            let job = jobs
+                .get(&id)
+                .ok_or_else(|| "PDF export job disappeared.".to_string())?;
+            let idx = unsafe { job.doc.pageCount() };
+            unsafe { job.doc.insertPage_atIndex(&page, idx) };
+            Ok(())
+        })
+    }
+
+    fn capture_page(id: u64, width: f64, height: f64, y: f64) {
         if y >= height - 0.5 {
             let path = JOBS.with(|jobs| {
                 jobs.borrow()
                     .get(&id)
-                    .map(|job| job.pdf_path.clone())
+                    .map(|job| (job.pdf_path.clone(), job.doc.clone()))
             });
-            let Some(path) = path else {
+            let Some((path, doc)) = path else {
                 return;
             };
-            let result = write_combined(&combined, &path);
-            finish(id, result);
+            finish(id, write_combined(&doc, &path));
             return;
         }
 
@@ -335,31 +360,15 @@ mod macos {
         }
 
         let block = RcBlock::new(move |data: *mut NSData, error: *mut NSError| {
-            let result = (|| -> Result<Retained<PDFDocument>, String> {
-                if !error.is_null() {
-                    let message = unsafe { &*error }.localizedDescription().to_string();
-                    return Err(format!("PDF export failed: {message}"));
-                }
-                if data.is_null() {
-                    return Err("PDF export returned no data.".into());
-                }
-                let page_data = unsafe { &*data };
-                validate_pdf(&page_data.to_vec())?;
-                let page_doc =
-                    unsafe { PDFDocument::initWithData(PDFDocument::alloc(), page_data) }
-                        .ok_or_else(|| "Could not parse a PDF page.".to_string())?;
-                let page = unsafe { page_doc.pageAtIndex(0) }
-                    .ok_or_else(|| "PDF page was empty.".to_string())?;
-                let next = combined.clone();
-                let idx = unsafe { next.pageCount() };
-                unsafe { next.insertPage_atIndex(&page, idx) };
-                Ok(next)
-            })();
-
+            // Only Send bytes leave this callback. PDFDocument stays on the main thread.
+            let bytes = page_bytes(data, error);
             let app = app.clone();
             std::thread::spawn(move || {
-                let _ = app.run_on_main_thread(move || match result {
-                    Ok(doc) => capture_page(id, width, height, y + page_h, doc),
+                let _ = app.run_on_main_thread(move || match bytes {
+                    Ok(b) => match stitch_page(id, b) {
+                        Ok(()) => capture_page(id, width, height, y + page_h),
+                        Err(err) => finish(id, Err(err)),
+                    },
                     Err(err) => finish(id, Err(err)),
                 });
             });
@@ -416,6 +425,7 @@ mod macos {
                         min_wait,
                         tx: tx.clone(),
                         app: app.clone(),
+                        doc: unsafe { PDFDocument::init(PDFDocument::alloc()) },
                     },
                 );
             });
