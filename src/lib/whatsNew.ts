@@ -7,7 +7,7 @@ import { APP_VERSION } from "./appVersion";
 export const WHATS_NEW = `## npp-x ${APP_VERSION}
 
 ### Fixes
-- **macOS PDF pagination** — A4 page slicing after render + tab-named `.pdf` files
+- **macOS PDF pagination** — A4 page slicing after render + tab-named PDF files
 - **Preview Copy** — copy CSV tables / MD / HTML for Teams & Word
 - **Split Diff view** — Base ⇄ Target dropdowns (no prompt popups)
 
