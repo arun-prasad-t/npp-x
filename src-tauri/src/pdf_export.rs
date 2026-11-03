@@ -81,7 +81,7 @@ mod macos {
     use block2::RcBlock;
     use objc2::rc::Retained;
     use objc2::runtime::AnyObject;
-    use objc2::{MainThreadMarker, MainThreadOnly};
+    use objc2::{AnyThread, MainThreadMarker, MainThreadOnly};
     use objc2_app_kit::{NSBackingStoreType, NSWindow, NSWindowStyleMask};
     use objc2_core_foundation::{CGPoint, CGRect, CGSize};
     use objc2_foundation::{NSData, NSError, NSNumber, NSString, NSURL};
