@@ -1,11 +1,10 @@
-## npp-x 0.1.11
+## npp-x 0.1.12
 
-### Fixes
-- **macOS Export PDF** — Export no longer freezes the app while writing the PDF
-- **Release workflow** — Manual Actions version/tag now rewrites the app version before build (tag and binary match)
-
-### From 0.1.10
-- macOS ⌘Q quits (comment is ⌃Q) · PDF load wait / light print CSS
+### What's new
+- **macOS PDF pagination** — Long Markdown / Mermaid previews slice into A4 pages after render finishes (no 2-page crush)
+- **PDF filename** — Export defaults to the active tab name (`notes.md` → `notes.pdf`)
+- **Preview Copy (CSV / MD / HTML)** — Select cells or click **Copy** to paste styled tables/content into Teams or Word
+- **Split Diff view** — Direct **Base ⇄ Target** dropdowns (any tab or Clipboard) + Split/Inline toggle; no prompt popups
 
 ### Downloads
 | Platform | Asset |

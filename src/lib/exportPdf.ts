@@ -39,6 +39,14 @@ html, body {
 body {
   padding: 28px !important;
   box-sizing: border-box !important;
+  /* Avoid collapsing a long doc into a short paint box before measure. */
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+html {
+  height: auto !important;
+  overflow: visible !important;
 }
 a { color: #15803d !important; }
 .meta, .companion-close, .preview-toolbar { display: none !important; }
@@ -70,14 +78,40 @@ function injectHeadCss(html: string, css: string, markerId: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/>${css}</head><body>${trimmed}</body></html>`;
 }
 
-export function prepareHtmlForPdf(html: string): string {
-  return injectHeadCss(html, PRINT_CSS, "nppx-print");
+function pdfFileNameFor(sourceName?: string): string {
+  const stem = (sourceName ?? "")
+    .trim()
+    .replace(/\.[^.\\/]+$/, "")
+    .replace(/[\\/:*?"<>|]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+  return `${stem || "npp-x-preview"}.pdf`;
+}
+
+function escapeTitle(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function withDocTitle(html: string, title: string): string {
+  const tag = `<title>${escapeTitle(title)}</title>`;
+  if (/<title[\s>][\s\S]*?<\/title>/i.test(html)) {
+    return html.replace(/<title[\s>][\s\S]*?<\/title>/i, tag);
+  }
+  return html.replace(/<head([^>]*)>/i, `<head$1>${tag}`);
+}
+
+export function prepareHtmlForPdf(html: string, fileName?: string): string {
+  const pdfName = pdfFileNameFor(fileName).replace(/\.pdf$/i, "");
+  return withDocTitle(injectHeadCss(html, PRINT_CSS, "nppx-print"), pdfName);
 }
 
 /** macOS native exporter — always force light readable ink. */
-export function prepareHtmlForNativePdf(html: string): string {
+export function prepareHtmlForNativePdf(
+  html: string,
+  fileName?: string,
+): string {
   return injectHeadCss(
-    prepareHtmlForPdf(html),
+    prepareHtmlForPdf(html, fileName),
     NATIVE_PDF_CSS,
     "nppx-print-native",
   );
@@ -120,9 +154,11 @@ function waitForFrame(win: Window, waitMs: number): Promise<void> {
 async function exportViaIframe(
   doc: string,
   waitMs: number,
+  fileName?: string,
 ): Promise<PdfExportResult> {
+  const pdfTitle = pdfFileNameFor(fileName).replace(/\.pdf$/i, "");
   const iframe = document.createElement("iframe");
-  iframe.setAttribute("title", "npp-x PDF export");
+  iframe.setAttribute("title", pdfTitle);
   iframe.setAttribute("aria-hidden", "true");
   // Non-zero size: some engines refuse to print 0×0 frames.
   Object.assign(iframe.style, {
@@ -137,7 +173,9 @@ async function exportViaIframe(
   });
   document.body.appendChild(iframe);
 
+  const prevTitle = document.title;
   const cleanup = () => {
+    document.title = prevTitle;
     try {
       iframe.remove();
     } catch {
@@ -156,9 +194,12 @@ async function exportViaIframe(
     idoc.open();
     idoc.write(doc);
     idoc.close();
+    idoc.title = pdfTitle;
+    document.title = pdfTitle;
     await waitForFrame(win, waitMs);
     win.focus();
     win.print();
+    document.title = prevTitle;
     window.setTimeout(cleanup, 60_000);
     return "ok";
   } catch (err) {
@@ -168,13 +209,16 @@ async function exportViaIframe(
 }
 
 /** macOS: save dialog + native print-to-PDF. */
-async function exportViaMacNative(html: string): Promise<PdfExportResult> {
+async function exportViaMacNative(
+  html: string,
+  fileName?: string,
+): Promise<PdfExportResult> {
   const path = await save({
-    defaultPath: "npp-x-preview.pdf",
+    defaultPath: pdfFileNameFor(fileName),
     filters: [{ name: "PDF", extensions: ["pdf"] }],
   });
   if (!path) return "cancelled";
-  const doc = prepareHtmlForNativePdf(html);
+  const doc = prepareHtmlForNativePdf(html, fileName);
   await invoke("export_html_to_pdf", { html: doc, path });
   return "saved";
 }
@@ -182,7 +226,11 @@ async function exportViaMacNative(html: string): Promise<PdfExportResult> {
 /** Open print / save-PDF for the prepared HTML. */
 export async function exportHtmlAsPdf(
   html: string,
-  opts?: { /** Extra wait for Mermaid CDN / images */ waitMs?: number },
+  opts?: {
+    /** Extra wait for Mermaid CDN / images */ waitMs?: number;
+    /** Active tab name — becomes `<stem>.pdf` instead of `npp-x-preview.pdf` */
+    fileName?: string;
+  },
 ): Promise<PdfExportResult> {
   if (exportInFlight) return "blocked";
   exportInFlight = true;
@@ -190,19 +238,24 @@ export async function exportHtmlAsPdf(
     const needsDiagrams =
       /mermaid|cdn\.jsdelivr\.net\/npm\/mermaid/i.test(html);
     const waitMs = opts?.waitMs ?? (needsDiagrams ? 2400 : 350);
+    const fileName = opts?.fileName;
 
     if (isMacTauri()) {
       try {
         // Pass raw preview HTML — native path adds forced light print CSS.
         // Never fall back to window.print() here: on WKWebView that call hangs the app.
-        return await exportViaMacNative(html);
+        return await exportViaMacNative(html, fileName);
       } catch (err) {
         console.error("Native PDF export failed", err);
         return { error: describeError(err) };
       }
     }
 
-    return exportViaIframe(prepareHtmlForPdf(html), waitMs);
+    return exportViaIframe(
+      prepareHtmlForPdf(html, fileName),
+      waitMs,
+      fileName,
+    );
   } finally {
     exportInFlight = false;
   }

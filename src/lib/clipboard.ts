@@ -23,7 +23,30 @@ export async function writeClipboardText(text: string): Promise<void> {
   }
 }
 
-async function readText(): Promise<string> {
+/** HTML + plain for Teams / Word (keeps table structure when the target allows). */
+export async function writeClipboardHtml(
+  html: string,
+  plain?: string,
+): Promise<void> {
+  const alt = plain ?? html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  if (isTauri()) {
+    const { writeHtml } = await import("@tauri-apps/plugin-clipboard-manager");
+    await writeHtml(html, alt);
+    return;
+  }
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        "text/html": new Blob([html], { type: "text/html" }),
+        "text/plain": new Blob([alt], { type: "text/plain" }),
+      }),
+    ]);
+  } catch {
+    await writeClipboardText(alt);
+  }
+}
+
+export async function readClipboardText(): Promise<string> {
   if (isTauri()) {
     const { readText: read } = await import(
       "@tauri-apps/plugin-clipboard-manager"
@@ -89,7 +112,7 @@ export async function editorPaste(
   ed: MonacoEditor.IStandaloneCodeEditor | null,
 ): Promise<boolean> {
   if (!ed) return false;
-  const text = await readText();
+  const text = await readClipboardText();
   if (!text) return false;
   const sel = ed.getSelection();
   if (!sel) return false;

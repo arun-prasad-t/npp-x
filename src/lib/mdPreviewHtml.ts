@@ -19,7 +19,8 @@ export function buildMarkdownPreviewHtml(
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <style>
 *{box-sizing:border-box}
-body{margin:0;padding:20px 24px 48px;font:15px/1.6 ui-sans-serif,system-ui,sans-serif;background:var(--pv-bg,#0f172a);color:var(--pv-fg,#e2e8f0)}
+body{margin:0;padding:20px 24px 48px;font:15px/1.6 ui-sans-serif,system-ui,sans-serif;background:var(--pv-bg,#0f172a);color:var(--pv-fg,#e2e8f0);-webkit-user-select:text;user-select:text}
+th,td,pre,code,p,li,h1,h2,h3,h4{ -webkit-user-select:text;user-select:text }
 .wrap{max-width:920px;margin:0 auto}
 h1,h2,h3,h4{line-height:1.25;margin:1.4em 0 .55em;letter-spacing:-.02em}
 h1{font-size:1.75rem;border-bottom:1px solid var(--pv-border,#334155);padding-bottom:.35em}
@@ -88,6 +89,8 @@ try {
 } catch (e) {
   out.innerHTML = '<div class="err">Preview failed: ' + esc(e && e.message ? e.message : e) +
     "<br/>Check network access for Mermaid / marked CDNs.</div><pre>" + esc(src) + "</pre>";
+} finally {
+  document.body.dataset.pdfReady = "1";
 }
 </script>
 </body></html>`;

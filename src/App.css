@@ -676,12 +676,55 @@ select,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
   background: var(--npp-chrome-2);
   border-bottom: 1px solid var(--npp-border);
+}
+
+.diff-pickers,
+.diff-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.diff-badge {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--npp-accent) 20%, transparent);
+  color: var(--npp-accent);
+  border: 1px solid color-mix(in srgb, var(--npp-accent) 45%, transparent);
+}
+
+.diff-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.diff-side-label {
+  color: var(--npp-muted);
+  font-weight: 500;
+}
+
+.diff-toolbar select {
+  appearance: none;
+  border: 1px solid var(--npp-border);
+  background: var(--npp-tab-active);
+  color: inherit;
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  min-height: 32px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .diff-toolbar button {
@@ -695,6 +738,19 @@ select,
   font: inherit;
   font-size: 12px;
   cursor: pointer;
+}
+
+.diff-toolbar button.on {
+  background: color-mix(in srgb, var(--npp-accent) 22%, var(--npp-tab-active));
+  border-color: var(--npp-accent);
+  font-weight: 600;
+}
+
+.diff-toolbar button:focus-visible,
+.diff-toolbar select:focus-visible,
+.preview-toolbar button:focus-visible {
+  outline: 2px solid var(--npp-accent);
+  outline-offset: 1px;
 }
 
 .diff-pane > section,

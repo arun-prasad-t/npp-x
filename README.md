@@ -94,10 +94,11 @@ If you ever said *“I wish N++ just worked on my Mac / Fedora box,”* this is 
 | **Optional fun plugins** | YouTube corner PiP + Type Runner buddy (draggable; off by default). |
 | **2026 chrome** | Dense slate IDE UI, Plus Jakarta Sans, run-green accent, click-stable menus. |
 
-### What’s new in 0.1.11
+### What’s new in 0.1.12
 
-- **macOS Export PDF** no longer freezes the app; Release Actions version input syncs the app binary
-- From 0.1.10: ⌘Q quits (⌃Q comments); Export PDF saves without the WKWebView print dialog
+- **macOS PDF pagination** + tab-named `.pdf` exports (`notes.md` → `notes.pdf`)
+- **Preview Copy** for CSV / Markdown / HTML (paste tables into Teams or Word)
+- **Split Diff view** with **Base ⇄ Target** pickers — no prompt popups
 
 Full notes: [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md).
 

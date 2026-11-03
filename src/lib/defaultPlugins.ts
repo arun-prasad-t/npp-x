@@ -130,7 +130,7 @@ nppx.registerCommand("community.html.previewClose", () => {
     author: "npp-x",
     version: "1.0.0",
     description:
-      "Parse CSV/TSV in the active buffer as a table preview. Enabled by default.",
+      "Parse CSV/TSV as a selectable table preview (copy HTML for Teams/Word). Enabled by default.",
     contributes: {
       commands: [
         { id: "community.csv.table", title: "Table Preview" },
@@ -187,14 +187,14 @@ nppx.registerCommand("community.csv.table", () => {
     return "<tr>" + cells + "</tr>";
   }).join("");
   const html = "<!DOCTYPE html><html><head><meta charset=\\"utf-8\\"><style>"
-    + "body{font:13px/1.4 system-ui,sans-serif;margin:12px;background:var(--pv-bg,#0f172a);color:var(--pv-fg,#e2e8f0)}"
-    + "table{border-collapse:collapse;width:100%}"
-    + "th,td{border:1px solid var(--pv-border,#334155);padding:6px 10px;text-align:left}"
+    + "body{font:13px/1.4 system-ui,sans-serif;margin:12px;background:var(--pv-bg,#0f172a);color:var(--pv-fg,#e2e8f0);-webkit-user-select:text;user-select:text}"
+    + "table{border-collapse:collapse;width:100%;-webkit-user-select:text;user-select:text}"
+    + "th,td{border:1px solid var(--pv-border,#334155);padding:6px 10px;text-align:left;-webkit-user-select:text;user-select:text}"
     + "th{background:var(--pv-panel,#1e293b);position:sticky;top:0}"
     + "tr:nth-child(even) td{background:color-mix(in srgb,var(--pv-panel,#1e293b) 55%,transparent)}"
     + "caption{text-align:left;margin-bottom:8px;color:var(--pv-muted,#94a3b8)}"
-    + "</style></head><body>"
-    + "<caption>" + esc(nppx.getActiveFileName() || "CSV") + " — " + rows.length + " rows</caption>"
+    + "</style></head><body data-pdf-ready=\\"1\\">"
+    + "<caption>" + esc(nppx.getActiveFileName() || "CSV") + " — " + rows.length + " rows · select cells and copy for Teams/Word</caption>"
     + "<table><thead>" + thead + "</thead><tbody>" + tbody + "</tbody></table>"
     + "</body></html>";
   nppx.openPreview({ title: "CSV Table — " + (nppx.getActiveFileName() || "untitled"), html });

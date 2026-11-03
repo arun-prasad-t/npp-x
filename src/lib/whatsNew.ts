@@ -7,8 +7,9 @@ import { APP_VERSION } from "./appVersion";
 export const WHATS_NEW = `## npp-x ${APP_VERSION}
 
 ### Fixes
-- **macOS Export PDF** — export no longer freezes the app
-- **macOS ⌘Q** quits (comment is ⌃Q); blank-page PDF mitigations from 0.1.10
+- **macOS PDF pagination** — A4 page slicing after render + tab-named `.pdf` files
+- **Preview Copy** — copy CSV tables / MD / HTML for Teams & Word
+- **Split Diff view** — Base ⇄ Target dropdowns (no prompt popups)
 
 ### Still with you
 - Preview Light/Dark · Find & Replace · Diff · HTML/CSV/Markdown+Mermaid · workers.dev demo

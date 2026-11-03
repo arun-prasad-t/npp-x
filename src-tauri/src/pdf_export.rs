@@ -13,10 +13,11 @@ use tauri::AppHandle;
 /// ~A4 at 96dpi. Also the floor so a failed measurement still yields a page.
 const PDF_MIN_W: f64 = 794.0;
 const PDF_MIN_H: f64 = 1123.0;
-/// ponytail: one tall page, not a paginated print. Cap ~100 A4 pages so a
-/// runaway layout cannot allocate an unbounded off-screen web view.
+/// Cap ~100 A4 pages so a runaway layout cannot allocate an unbounded view.
 const PDF_MAX_W: f64 = 4096.0;
 const PDF_MAX_H: f64 = 120_000.0;
+/// A4 slice height used when paginating createPDF output (~96dpi CSS px).
+const PDF_PAGE_H: f64 = PDF_MIN_H;
 
 #[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 fn clamp_pdf_size(width: f64, height: f64) -> (f64, f64) {
@@ -84,15 +85,27 @@ mod macos {
     use objc2_app_kit::{NSBackingStoreType, NSWindow, NSWindowStyleMask};
     use objc2_core_foundation::{CGPoint, CGRect, CGSize};
     use objc2_foundation::{NSData, NSError, NSNumber, NSString, NSURL};
+    use objc2_pdf_kit::PDFDocument;
     use objc2_web_kit::{WKPDFConfiguration, WKWebView, WKWebViewConfiguration};
     use tauri::AppHandle;
 
-    use super::{parse_pdf_size, validate_pdf, PDF_MIN_H, PDF_MIN_W};
+    use super::{parse_pdf_size, validate_pdf, PDF_MIN_H, PDF_MIN_W, PDF_PAGE_H};
+
+    /// "1" when Markdown/Mermaid (or static body[data-pdf-ready]) finished painting.
+    const READY_JS: &str = "(function(){\
+        var b=document.body;\
+        if(b&&b.dataset&&b.dataset.pdfReady==='1')return '1';\
+        if(document.querySelector('script[type=module]'))return '0';\
+        return document.readyState==='complete'?'1':'0';\
+    })()";
 
     const HEIGHT_JS: &str = "(function(){\
         var b=document.body,d=document.documentElement;\
-        var w=Math.max(b?b.scrollWidth:0,d?d.scrollWidth:0,0);\
-        var h=Math.max(b?b.scrollHeight:0,d?d.scrollHeight:0,b?b.offsetHeight:0,0);\
+        var w=Math.max(b?b.scrollWidth:0,d?d.scrollWidth:0,b?b.offsetWidth:0,0);\
+        var h=Math.max(\
+          b?b.scrollHeight:0,d?d.scrollHeight:0,\
+          b?b.offsetHeight:0,d?d.offsetHeight:0,\
+          b?b.clientHeight:0,0);\
         return Math.ceil(w)+','+Math.ceil(h);\
     })()";
 
@@ -154,22 +167,52 @@ mod macos {
             } else if loading || job.started.elapsed() < job.min_wait {
                 Poll::Wait
             } else {
-                Poll::Ready
+                Poll::CheckReady
             }
         });
         match next {
             Poll::Gone => {}
             Poll::Timeout => finish(id, Err("Timed out loading the preview for PDF.".into())),
             Poll::Wait => arm(id),
-            Poll::Ready => measure(id),
+            Poll::CheckReady => check_ready(id),
         }
     }
 
     enum Poll {
         Wait,
-        Ready,
+        CheckReady,
         Timeout,
         Gone,
+    }
+
+    fn check_ready(id: u64) {
+        let prepared = JOBS.with(|jobs| {
+            jobs.borrow()
+                .get(&id)
+                .map(|job| (job.webview.clone(), job.app.clone(), job.started))
+        });
+        let Some((webview, app, started)) = prepared else {
+            return;
+        };
+        let js = NSString::from_str(READY_JS);
+        let block = RcBlock::new(move |value: *mut AnyObject, _error: *mut NSError| {
+            let ready = objc_string(value) == "1";
+            let deliver = move || {
+                if ready {
+                    measure(id);
+                } else if started.elapsed() > std::time::Duration::from_secs(25) {
+                    finish(id, Err("Timed out waiting for preview render.".into()));
+                } else {
+                    arm(id);
+                }
+            };
+            if MainThreadMarker::new().is_some() {
+                deliver();
+            } else {
+                let _ = app.run_on_main_thread(deliver);
+            }
+        });
+        unsafe { webview.evaluateJavaScript_completionHandler(&js, Some(&block)) };
     }
 
     fn objc_string(value: *mut AnyObject) -> String {
@@ -225,49 +268,100 @@ mod macos {
         });
     }
 
-    fn write_pdf(data: *mut NSData, error: *mut NSError, path: &str) -> Result<(), String> {
-        if !error.is_null() {
-            let message = unsafe { &*error }.localizedDescription().to_string();
-            return Err(format!("PDF export failed: {message}"));
+    fn write_combined(doc: &PDFDocument, path: &str) -> Result<(), String> {
+        if unsafe { doc.pageCount() } == 0 {
+            return Err("PDF export produced no pages.".into());
         }
-        if data.is_null() {
-            return Err("PDF export returned no data.".into());
-        }
-        let bytes = unsafe { &*data }.to_vec();
-        validate_pdf(&bytes)?;
         if let Some(parent) = std::path::Path::new(path).parent() {
             if !parent.as_os_str().is_empty() {
                 fs::create_dir_all(parent).map_err(|e| e.to_string())?;
             }
         }
-        fs::write(path, bytes).map_err(|e| e.to_string())
+        let path_ns = NSString::from_str(path);
+        if !unsafe { doc.writeToFile(&path_ns) } {
+            return Err("Could not write the PDF file.".into());
+        }
+        let bytes = fs::read(path).map_err(|e| e.to_string())?;
+        validate_pdf(&bytes)
     }
 
+    /// Slice the tall layout into A4-height pages (createPDF alone yields one
+    /// giant page / truncated output for long Markdown).
     fn capture(id: u64, width: f64, height: f64) {
+        let combined = unsafe { PDFDocument::init(PDFDocument::alloc()) };
+        capture_page(id, width, height, 0.0, combined);
+    }
+
+    fn capture_page(
+        id: u64,
+        width: f64,
+        height: f64,
+        y: f64,
+        combined: Retained<PDFDocument>,
+    ) {
+        if y >= height - 0.5 {
+            let path = JOBS.with(|jobs| {
+                jobs.borrow()
+                    .get(&id)
+                    .map(|job| job.pdf_path.clone())
+            });
+            let Some(path) = path else {
+                return;
+            };
+            let result = write_combined(&combined, &path);
+            finish(id, result);
+            return;
+        }
+
         let prepared = JOBS.with(|jobs| {
             jobs.borrow()
                 .get(&id)
-                .map(|job| (job.webview.clone(), job.pdf_path.clone(), job.app.clone()))
+                .map(|job| (job.webview.clone(), job.app.clone()))
         });
-        let Some((webview, path, app)) = prepared else {
+        let Some((webview, app)) = prepared else {
             return;
         };
         let Some(mtm) = MainThreadMarker::new() else {
             return;
         };
+
+        let page_h = (height - y).min(PDF_PAGE_H).max(1.0);
         let config = unsafe { WKPDFConfiguration::new(mtm) };
         unsafe {
             config.setRect(CGRect::new(
-                CGPoint::new(0.0, 0.0),
-                CGSize::new(width, height),
+                CGPoint::new(0.0, y),
+                CGSize::new(width, page_h),
             ));
         }
+
         let block = RcBlock::new(move |data: *mut NSData, error: *mut NSError| {
-            let result = write_pdf(data, error, &path);
-            // Leave the WebKit callback before releasing the view.
+            let result = (|| -> Result<Retained<PDFDocument>, String> {
+                if !error.is_null() {
+                    let message = unsafe { &*error }.localizedDescription().to_string();
+                    return Err(format!("PDF export failed: {message}"));
+                }
+                if data.is_null() {
+                    return Err("PDF export returned no data.".into());
+                }
+                let page_data = unsafe { &*data };
+                validate_pdf(&page_data.to_vec())?;
+                let page_doc =
+                    unsafe { PDFDocument::initWithData(PDFDocument::alloc(), page_data) }
+                        .ok_or_else(|| "Could not parse a PDF page.".to_string())?;
+                let page = unsafe { page_doc.pageAtIndex(0) }
+                    .ok_or_else(|| "PDF page was empty.".to_string())?;
+                let next = combined.clone();
+                let idx = unsafe { next.pageCount() };
+                unsafe { next.insertPage_atIndex(&page, idx) };
+                Ok(next)
+            })();
+
             let app = app.clone();
             std::thread::spawn(move || {
-                let _ = app.run_on_main_thread(move || finish(id, result));
+                let _ = app.run_on_main_thread(move || match result {
+                    Ok(doc) => capture_page(id, width, height, y + page_h, doc),
+                    Err(err) => finish(id, Err(err)),
+                });
             });
         });
         unsafe { webview.createPDFWithConfiguration_completionHandler(Some(&config), &block) };
@@ -328,7 +422,7 @@ mod macos {
             arm(id);
             let app_timeout = app.clone();
             std::thread::spawn(move || {
-                std::thread::sleep(std::time::Duration::from_secs(40));
+                std::thread::sleep(std::time::Duration::from_secs(110));
                 let _ = app_timeout.run_on_main_thread(move || {
                     finish(id, Err("PDF export timed out.".into()));
                 });
@@ -350,7 +444,7 @@ mod macos {
         if let Err(err) = app.run_on_main_thread(move || start(app_main, html, pdf_path, tx)) {
             return Err(err.to_string());
         }
-        match rx.recv_timeout(std::time::Duration::from_secs(50)) {
+        match rx.recv_timeout(std::time::Duration::from_secs(120)) {
             Ok(result) => result,
             Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
                 Err("PDF export was interrupted.".into())

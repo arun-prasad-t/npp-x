@@ -44,7 +44,6 @@ import {
 } from "./components/BrowserWelcomeDialog";
 import { formatJson, formatXml } from "./lib/formatters";
 import {
-  createDiffTab,
   createFromFile,
   createUntitled,
   isDiffTab,
@@ -88,6 +87,7 @@ import {
   tabModelPath,
 } from "./lib/docModels";
 import { isTauri, readTextFile, writeTextFile } from "./lib/tauri";
+import { readClipboardText } from "./lib/clipboard";
 import "./App.css";
 
 type Cursor = { line: number; column: number; selection: number };
@@ -177,6 +177,12 @@ export default function App() {
   );
   const [docks, setDocks] = useState<DockPanel[]>([]);
   const [companions, setCompanions] = useState<CompanionPanel[]>([]);
+  /** Split-screen diff workspace (no prompt popups). */
+  const [diffSplit, setDiffSplit] = useState<{
+    leftId: string;
+    rightId: string;
+    clipboard: string;
+  } | null>(null);
   const [welcomeForceOpen, setWelcomeForceOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [updateUi, setUpdateUi] = useState<{
@@ -721,8 +727,10 @@ export default function App() {
           ? "Saving PDF…"
           : "Opening print dialog — choose Save as PDF",
       );
+      const activeTab = tabsRef.current.find((t) => t.id === activeIdRef.current);
       const result = await exportHtmlAsPdf(
         withPreviewScheme(preview.html, scheme),
+        { fileName: activeTab?.name },
       );
       if (result === "saved") {
         notify("PDF saved");
@@ -1045,53 +1053,32 @@ export default function App() {
           }
         },
         openDiffTabs: () => {
-          const list = tabsRef.current.filter((t) => !isDiffTab(t));
-          if (list.length < 2) {
-            notify("Open at least two document tabs to compare");
-            return;
-          }
-          const names = list.map((t, i) => `${i + 1}. ${t.name}`).join("\n");
-          const pick = window.prompt(
-            `Compare active tab with which tab number?\n${names}`,
-            list.findIndex((t) => t.id !== activeIdRef.current) + 1 + "",
-          );
-          const idx = Number(pick) - 1;
-          const other = list[idx];
-          const cur = list.find((t) => t.id === activeIdRef.current);
-          if (!other || !cur || other.id === cur.id) {
-            notify("Invalid tab selection");
-            return;
-          }
-          const tab = createDiffTab(
-            `Diff: ${other.name} ← → ${cur.name}`,
-            other.content,
-            cur.content,
-            monacoForLanguage(cur.language),
-          );
-          setTabs((prev) => [...prev, tab]);
-          setActiveId(tab.id);
+          const docs = tabsRef.current.filter((t) => !isDiffTab(t));
+          const cur =
+            docs.find((t) => t.id === activeIdRef.current) ?? docs[0];
+          const other = docs.find((t) => t.id !== cur?.id);
+          void readClipboardText().then((clip) => {
+            setDiffSplit({
+              leftId: other ? other.id : "__clipboard__",
+              rightId: cur?.id ?? "__clipboard__",
+              clipboard: clip,
+            });
+          });
         },
         openDiffClipboard: () => {
-          void (async () => {
-            try {
-              const clip = await navigator.clipboard.readText();
-              const cur =
-                tabsRef.current.find((t) => t.id === activeIdRef.current) ??
-                tabsRef.current.find((t) => !isDiffTab(t));
-              const tab = createDiffTab(
-                "Diff: Clipboard ← → Active",
-                clip,
-                cur?.content ?? "",
-                monacoForLanguage(cur?.language ?? "normal"),
-              );
-              setTabs((prev) => [...prev, tab]);
-              setActiveId(tab.id);
-            } catch {
-              notify("Clipboard read failed — allow clipboard permission");
-            }
-          })();
+          const docs = tabsRef.current.filter((t) => !isDiffTab(t));
+          const cur =
+            docs.find((t) => t.id === activeIdRef.current) ?? docs[0];
+          void readClipboardText().then((clip) => {
+            setDiffSplit({
+              leftId: "__clipboard__",
+              rightId: cur?.id ?? "__clipboard__",
+              clipboard: clip,
+            });
+          });
         },
         exitDiff: () => {
+          setDiffSplit(null);
           const cur = tabsRef.current.find((t) => t.id === activeIdRef.current);
           if (isDiffTab(cur)) handleClose(cur!.id);
         },
@@ -1292,16 +1279,82 @@ export default function App() {
       ) : null}
 
       <div className="editor-pane">
-        {isDiffTab(active) && active.view ? (
-          <DiffPane
-            original={active.view.original}
-            modified={active.view.modified}
-            language={active.view.language}
-            theme={monacoThemeName}
-            fontSize={fontSize}
-            label={active.name}
-            onExit={() => handleClose(active.id)}
-          />
+        {diffSplit ? (
+          (() => {
+            const docTabs = tabs.filter((t) => !isDiffTab(t));
+            const leftTab = docTabs.find((t) => t.id === diffSplit.leftId);
+            const rightTab = docTabs.find((t) => t.id === diffSplit.rightId);
+            const leftId =
+              diffSplit.leftId === "__clipboard__" || leftTab
+                ? diffSplit.leftId
+                : (docTabs[0]?.id ?? "__clipboard__");
+            const rightId =
+              diffSplit.rightId === "__clipboard__" || rightTab
+                ? diffSplit.rightId
+                : (docTabs[0]?.id ?? "__clipboard__");
+            const original =
+              leftId === "__clipboard__"
+                ? diffSplit.clipboard
+                : (docTabs.find((t) => t.id === leftId)?.content ?? "");
+            const modified =
+              rightId === "__clipboard__"
+                ? diffSplit.clipboard
+                : (docTabs.find((t) => t.id === rightId)?.content ?? "");
+            const langSource =
+              docTabs.find((t) => t.id === rightId) ??
+              docTabs.find((t) => t.id === leftId) ??
+              active;
+            const options = [
+              ...docTabs.map((t) => ({ id: t.id, label: t.name })),
+              { id: "__clipboard__", label: "Clipboard" },
+            ];
+            return (
+              <DiffPane
+                leftId={leftId}
+                rightId={rightId}
+                options={options}
+                original={original}
+                modified={modified}
+                language={monacoForLanguage(langSource?.language ?? "normal")}
+                theme={monacoThemeName}
+                fontSize={fontSize}
+                onLeftChange={(id) => {
+                  if (id === "__clipboard__") {
+                    void readClipboardText().then((clip) =>
+                      setDiffSplit((d) =>
+                        d ? { ...d, leftId: id, clipboard: clip } : d,
+                      ),
+                    );
+                  } else {
+                    setDiffSplit((d) => (d ? { ...d, leftId: id } : d));
+                  }
+                }}
+                onRightChange={(id) => {
+                  if (id === "__clipboard__") {
+                    void readClipboardText().then((clip) =>
+                      setDiffSplit((d) =>
+                        d ? { ...d, rightId: id, clipboard: clip } : d,
+                      ),
+                    );
+                  } else {
+                    setDiffSplit((d) => (d ? { ...d, rightId: id } : d));
+                  }
+                }}
+                onSwap={() =>
+                  setDiffSplit((d) =>
+                    d ? { ...d, leftId: d.rightId, rightId: d.leftId } : d,
+                  )
+                }
+                onRefreshClipboard={() =>
+                  void readClipboardText().then((clip) => {
+                    setDiffSplit((d) => (d ? { ...d, clipboard: clip } : d));
+                    notify("Clipboard refreshed");
+                  })
+                }
+                onExit={() => setDiffSplit(null)}
+              />
+            );
+          })()
         ) : (
           <>
             {!activePreview && previewOffer && !offerDismissed ? (
@@ -1414,6 +1467,7 @@ export default function App() {
                       : undefined
                   }
                   onExportPdf={exportActivePreviewPdf}
+                  onNotify={notify}
                   onClose={() =>
                     setPreviews((prev) => {
                       const next = { ...prev };

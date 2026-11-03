@@ -151,9 +151,9 @@ export const TOP_MENUS: TopMenu[] = [
   {
     label: "Diff",
     items: [
-      { kind: "item", id: -1020, label: "Compare Tabs…" },
+      { kind: "item", id: -1020, label: "Split Diff View" },
       { kind: "item", id: -1021, label: "Compare with Clipboard" },
-      { kind: "item", id: -1022, label: "Close Diff Tab" },
+      { kind: "item", id: -1022, label: "Close Diff View" },
     ],
   },
   {
